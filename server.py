@@ -17,15 +17,15 @@ class Server:
         using make_pipe() function. The Server object also has PIPELocks for
         handling concurrency.
         """
-        self.regiter_pipe_path = Path("register_pipe")
+        self.register_pipe_path = Path("register_pipe")
         self.registered_client_pids = []
 
-        make_pipe(self.regiter_pipe_path)
+        make_pipe(self.register_pipe_path)
 
         self.register_pipe = os.open(
-            self.regiter_pipe_path, os.O_RDONLY | os.O_NONBLOCK
+            self.register_pipe_path, os.O_RDONLY | os.O_NONBLOCK
         )
-        self.register_pipe_lock = PIPELock(self.regiter_pipe_path, init=True)
+        self.register_pipe_lock = PIPELock(self.register_pipe_path, init=True)
 
     def __del__(self) -> None:
         """Destructor of Server object.
@@ -35,8 +35,8 @@ class Server:
 
         # TODO: This function is not called via KeyboardInterrupt.
         # Therefore, the register_pipe does not disappear.
-        if self.regiter_pipe_path.exists():
-            self.regiter_pipe_path.unlink()
+        if self.register_pipe_path.exists():
+            self.register_pipe_path.unlink()
 
     def start_register_pipe(self) -> None:
         """Starts the register pipe thread.
@@ -46,27 +46,28 @@ class Server:
         """
 
         def register_pipe():
+            """Reads from the register pipe and handles the client registration."""
             while True:
                 time.sleep(1e-4)
-                self.register_pipe_lock.acquire_lock()
-                try:
-                    rlist, _, _ = select.select(
-                        [self.register_pipe], [], [], 1e-4
+                read_register_pipe()
+
+        def read_register_pipe():
+            """Reads a message from the register pipe and handles the client registration."""
+            self.register_pipe_lock.acquire_lock()
+            try:
+                rlist, _, _ = select.select([self.register_pipe], [], [], 1e-4)
+                if rlist:
+                    client_pids = (
+                        os.read(self.register_pipe, 1024).decode().strip()
                     )
-                    if rlist:
-                        client_pids = (
-                            os.read(self.register_pipe, 1024).decode().strip()
-                        )
-                        if client_pids:
-                            for client_pid in client_pids.split("\n"):
-                                client_pid = int(client_pid)
-                                self.registered_client_pids.append(client_pid)
-                                print(f"Registered pid: {client_pid}")
-                                # TODO: Should the register logic and read_client
-                                # logic be separated?
-                                self.start_read_client(client_pid)
-                finally:
-                    self.register_pipe_lock.release_lock()
+                    if client_pids:
+                        for client_pid in client_pids.split("\n"):
+                            client_pid = int(client_pid)
+                            self.registered_client_pids.append(client_pid)
+                            print(f"Registered pid: {client_pid}")
+                            self.start_read_client(client_pid)
+            finally:
+                self.register_pipe_lock.release_lock()
 
         register_th = threading.Thread(target=register_pipe)
         register_th.start()
@@ -82,6 +83,7 @@ class Server:
             receive_pipe_path = Path(f"{client_pid}_to_server_pipe")
             receive_pipe = os.open(receive_pipe_path, os.O_RDONLY)
             receive_pipe_lock = PIPELock(receive_pipe_path)
+
             while True:
                 # TODO: Should I keep receive_pipe open?
                 # If we close it, it doesn't work well.
