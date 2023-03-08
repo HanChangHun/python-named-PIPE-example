@@ -9,7 +9,7 @@ from utils.utils import make_pipe
 
 
 class Server:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Server object.
 
         Initializes the Server object with register_pipe_path, registered_pids,
@@ -18,7 +18,7 @@ class Server:
         handling concurrency.
         """
         self.regiter_pipe_path = Path("register_pipe")
-        self.registered_pids = []
+        self.registered_client_pids = []
 
         make_pipe(self.regiter_pipe_path)
 
@@ -27,7 +27,7 @@ class Server:
         )
         self.register_pipe_lock = PIPELock(self.regiter_pipe_path, init=True)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor of Server object.
 
         Remove the register_pipe if it exists.
@@ -38,7 +38,7 @@ class Server:
         if self.regiter_pipe_path.exists():
             self.regiter_pipe_path.unlink()
 
-    def start_register_pipe(self):
+    def start_register_pipe(self) -> None:
         """Starts the register pipe thread.
 
         The thread waits for a pid to be received from the client, adds the pid
@@ -54,24 +54,24 @@ class Server:
                         [self.register_pipe], [], [], 1e-4
                     )
                     if rlist:
-                        pids = (
+                        client_pids = (
                             os.read(self.register_pipe, 1024).decode().strip()
                         )
-                        if pids:
-                            for pid in pids.split("\n"):
-                                pid = int(pid)
-                                self.registered_pids.append(pid)
-                                print(f"Registered pid: {pid}")
+                        if client_pids:
+                            for client_pid in client_pids.split("\n"):
+                                client_pid = int(client_pid)
+                                self.registered_client_pids.append(client_pid)
+                                print(f"Registered pid: {client_pid}")
                                 # TODO: Should the register logic and read_client
                                 # logic be separated?
-                                self.start_read_client(pid)
+                                self.start_read_client(client_pid)
                 finally:
                     self.register_pipe_lock.release_lock()
 
         register_th = threading.Thread(target=register_pipe)
         register_th.start()
 
-    def start_read_client(self, pid):
+    def start_read_client(self, client_pid: int) -> None:
         """Starts the read client thread.
 
         The thread waits for a request from the client, handles the request, and
@@ -79,7 +79,7 @@ class Server:
         """
 
         def read_client():
-            receive_pipe_path = Path(f"{pid}_to_server_pipe")
+            receive_pipe_path = Path(f"{client_pid}_to_server_pipe")
             receive_pipe = os.open(receive_pipe_path, os.O_RDONLY)
             receive_pipe_lock = PIPELock(receive_pipe_path)
             while True:
@@ -92,32 +92,63 @@ class Server:
                     if rlist:
                         request = os.read(receive_pipe, 1024).decode()
                         if request and request.strip():
-                            print(f"Read from client {pid}: {request}")
+                            print(f"Read from client {client_pid}: {request}")
                             # TODO: Should the read_client logic be separated
                             # from the handle logic?
-                            self.handle_request(pid, request)
+                            self.handle_request(client_pid, request)
                 finally:
                     receive_pipe_lock.release_lock()
 
         read_th = threading.Thread(target=read_client)
         read_th.start()
 
-    def handle_request(self, pid, request):
+    def handle_request(self, pid: int, request_data: str) -> None:
         """Handles the request from the client.
-
-        The handle_request function takes the request and sends back the response
-        by doubling the value of the request. This function will be modified
-        later for handling more complex logic.
 
         Args:
             pid (int): The process ID of the client.
             request (str): The request received from the client.
         """
+        data = self.parse_request(request_data)
+        response = self.process_request(data)
+        self.send_response(pid, response)
+
+    def parse_request(self, request_data: str) -> int:
+        """Parses the request and converts it to an integer.
+
+        Args:
+            request (str): The request received from the client.
+
+        Returns:
+            int: The request value as an integer.
+        """
+        return int(request_data)
+
+    def process_request(self, data: int) -> int:
+        """Processes the request and generates the response.
+
+        This method currently doubles the value of the request, but it can be
+        modified to handle more complex logic in the future.
+
+        Args:
+            data (int): The request value as an integer.
+
+        Returns:
+            int: The response value as an integer.
+        """
+        return data * 2
+
+    def send_response(self, pid: int, response: int) -> None:
+        """Sends the response to the client.
+
+        Args:
+            pid (int): The process ID of the client.
+            response (int): The response value as an integer.
+        """
         send_pipe_path = Path(f"server_to_{pid}_pipe")
         send_pipe_lock = PIPELock(send_pipe_path)
 
-        data = int(request)
-        msg = f"{data * 2}".encode()
+        msg = f"{response}".encode()
 
         send_pipe_lock.acquire_lock()
         send_pipe = os.open(send_pipe_path, os.O_WRONLY)
