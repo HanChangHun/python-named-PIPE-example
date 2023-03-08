@@ -3,16 +3,17 @@ from pathlib import Path
 import select
 import time
 
-from utils import acquire_lock, make_pipe, release_lock
+from utils.utils import make_pipe
+from utils.pipe_lock import PIPELock
 
 
-def main():
+def receive_from_named_pipe(timeout):
     # Set timeout and create lock file path
-    timeout = 10
-    lock_file_path = "lock_test/lock"
+    pipe_lock_path = "lock_practice/register_pipe_lock"
+    pipe_lock = PIPELock(pipe_lock_path)
 
     # Create and open named PIPE
-    pipe_path = Path("lock_test/register_pipe")
+    pipe_path = Path("lock_practice/register_pipe")
     make_pipe(pipe_path)
     pipe = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
 
@@ -24,7 +25,7 @@ def main():
             break
 
         # Acquire lock and read incoming data from PIPE
-        lock_file = acquire_lock(lock_file_path)
+        pipe_lock.acquire_lock()
         try:
             # Check for incoming requests through named PIPE
             rlist, _, _ = select.select([pipe], [], [], 1e-4)
@@ -37,13 +38,18 @@ def main():
                         pid = int(pid)
                         print(f"Registered pid: {pid}")
         finally:
-            release_lock(lock_file, lock_file_path)
+            # Release the lock for the named pipe
+            pipe_lock.release_lock()
 
         # Pause execution briefly to avoid consuming too much resources
         time.sleep(1e-4)
 
     # Clean up named PIPE file
     pipe_path.unlink()
+
+
+def main():
+    receive_from_named_pipe(timeout=10)
 
 
 if __name__ == "__main__":
