@@ -8,6 +8,12 @@ from utils.pipe_lock import PIPELock
 
 
 def receive_from_named_pipe(timeout):
+    """Continuously monitor a named PIPE for incoming requests.
+
+    Args:
+        timeout (float): The time limit (in seconds) for waiting for incoming
+            requests.
+    """
     # Set timeout and create lock file path
     pipe_lock_path = "lock_practice/register_pipe_lock"
     pipe_lock = PIPELock(pipe_lock_path)
@@ -49,6 +55,7 @@ def receive_from_named_pipe(timeout):
 
 
 def main():
+    """Run receive_from_named_pipe with a timeout of 10 seconds."""
     receive_from_named_pipe(timeout=10)
 
 

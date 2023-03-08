@@ -4,12 +4,12 @@ import time
 from utils.pipe_lock import PIPELock
 
 
-def request_to_named_pipe(data):
-    """
-    Write data to the named pipe while acquiring a lock
+def request_to_named_pipe(data: str = None):
+    """Write data to a named PIPE while acquiring a lock.
 
     Args:
-        data: The data to write to the named pipe
+        data (str, optional): The data to write to the named PIPE. If None,
+            use the current process ID. Defaults to None.
     """
 
     if data is None:
