@@ -17,7 +17,7 @@ def start_sender() -> None:
     proc.start()
 
 
-def main() -> None:
+def main():
     """Start two processes, one to receive data and two to send data."""
     start_receiver()
     start_sender()

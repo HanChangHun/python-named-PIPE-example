@@ -4,7 +4,7 @@ import time
 
 
 class PIPELock:
-    def __init__(self, lock_file_path: Path, init: bool = False):
+    def __init__(self, pipe_path: Path, init: bool = False):
         """Create a new instance of the PIPELock class.
 
         Args:
@@ -12,8 +12,10 @@ class PIPELock:
             init (bool, optional): If set to True, initialize the lock file by
             removing it if it exists. Defaults to False.
         """
-        self.lock_file_path = lock_file_path
+        self.lock_file_path = pipe_path.parent / f"{pipe_path.name}_lock"
         self.lock_file = None
+
+        self.init = init
 
         if init:
             self.init_lock()
@@ -43,7 +45,9 @@ class PIPELock:
         """
         if self.lock_file is not None:
             os.close(self.lock_file)
-            os.remove(self.lock_file_path)
             self.lock_file = None
         else:
             raise Exception("Lock file not open")
+
+        if self.lock_file_path.exists():
+            self.lock_file_path.unlink()

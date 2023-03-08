@@ -1,11 +1,12 @@
 import os
+from pathlib import Path
 
 
-def make_pipe(path: str) -> None:
+def make_pipe(path: Path) -> None:
     """Create a named pipe at the specified path.
 
     Args:
-        path (str): The path where the named pipe will be created.
+        path (Path): The path where the named pipe will be created.
 
     Returns:
         None: This function returns nothing.

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import select
 import time
 from utils.pipe_lock import PIPELock
@@ -16,12 +17,13 @@ def request_to_named_pipe(data: str = None):
         data = f"{os.getpid()}\n"
 
     # Define the path to the lock file
-    pipe_lock_path = "lock_practice/register_pipe_lock"
-    pipe_lock = PIPELock(pipe_lock_path)
 
     # Define the path to the named pipe and open it for writing
-    pipe_path = f"lock_practice/register_pipe"
+    pipe_path = Path("lock_practice/register_pipe")
     pipe = os.open(pipe_path, os.O_WRONLY | os.O_NONBLOCK)
+
+    # Get the lock file
+    pipe_lock = PIPELock(pipe_path)
 
     # Acquire the lock for the named pipe
     pipe_lock.acquire_lock()

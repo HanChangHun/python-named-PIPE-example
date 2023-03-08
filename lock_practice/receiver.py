@@ -15,13 +15,14 @@ def receive_from_named_pipe(timeout):
             requests.
     """
     # Set timeout and create lock file path
-    pipe_lock_path = "lock_practice/register_pipe_lock"
-    pipe_lock = PIPELock(pipe_lock_path)
 
     # Create and open named PIPE
     pipe_path = Path("lock_practice/register_pipe")
     make_pipe(pipe_path)
     pipe = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+
+    # Create lock file
+    pipe_lock = PIPELock(pipe_path, init=True)
 
     # Continuously monitor named PIPE for incoming requests
     start_time = time.time()
@@ -40,7 +41,7 @@ def receive_from_named_pipe(timeout):
                 if pids:
                     print(f"Incoming request(s): {pids}")
                     # Process incoming data if not empty
-                    for pid in pids.strip().split("\n"):
+                    for pid in pids.split("\n"):
                         pid = int(pid)
                         print(f"Registered pid: {pid}")
         finally:
