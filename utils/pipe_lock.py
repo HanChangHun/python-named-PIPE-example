@@ -1,6 +1,5 @@
-import os
+import fasteners
 from pathlib import Path
-import time
 
 
 class PIPELock:
@@ -12,8 +11,8 @@ class PIPELock:
             init (bool, optional): If set to True, initialize the lock file by
             removing it if it exists. Defaults to False.
         """
-        self.lock_file_path = pipe_path.parent / f"{pipe_path.name}_lock"
-        self.lock_file = None
+        self.lock_file_path = pipe_path.parent / f"{pipe_path.name}.lock"
+        self.lock = fasteners.InterProcessLock(self.lock_file_path)
 
         self.init = init
 
@@ -27,15 +26,7 @@ class PIPELock:
 
     def acquire_lock(self) -> None:
         """Acquire the lock by creating the lock file with exclusive access."""
-        while True:
-            try:
-                self.lock_file = os.open(
-                    self.lock_file_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY
-                )
-                break
-            except OSError as e:
-                # Failed to acquire lock, wait and try again
-                time.sleep(1e-9)
+        self.lock.acquire()
 
     def release_lock(self) -> None:
         """Release the lock by closing and deleting the lock file.
@@ -43,11 +34,4 @@ class PIPELock:
         Raises:
             Exception: If the lock file is not open.
         """
-        if self.lock_file is not None:
-            os.close(self.lock_file)
-            self.lock_file = None
-        else:
-            raise Exception("Lock file not open")
-
-        if self.lock_file_path.exists():
-            self.lock_file_path.unlink()
+        self.lock.release()
