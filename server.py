@@ -5,6 +5,8 @@ import threading
 from pathlib import Path
 
 from utils.pipe_lock import PIPELock
+from utils.pipe_reader import PIPEReader
+from utils.pipe_writer import PIPEWriter
 from utils.utils import make_pipe
 
 
@@ -22,10 +24,12 @@ class Server:
 
         make_pipe(self.register_pipe_path)
 
-        self.register_pipe = os.open(
-            self.register_pipe_path, os.O_RDONLY | os.O_NONBLOCK
-        )
-        self.register_pipe_lock = PIPELock(self.register_pipe_path, init=True)
+        # self.register_pipe = os.open(
+        #     self.register_pipe_path, os.O_RDONLY | os.O_NONBLOCK
+        # )
+        # self.register_pipe_lock = PIPELock(self.register_pipe_path, init=True)
+
+        self.register_pipe_reader = PIPEReader(self.register_pipe_path)
 
     def __del__(self) -> None:
         """Destructor of Server object.
@@ -53,21 +57,13 @@ class Server:
 
         def read_register_pipe():
             """Reads a message from the register pipe and handles the client registration."""
-            self.register_pipe_lock.acquire_lock()
-            try:
-                rlist, _, _ = select.select([self.register_pipe], [], [], 1e-4)
-                if rlist:
-                    client_pids = (
-                        os.read(self.register_pipe, 1024).decode().strip()
-                    )
-                    if client_pids:
-                        for client_pid in client_pids.split("\n"):
-                            client_pid = int(client_pid)
-                            self.registered_client_pids.append(client_pid)
-                            print(f"Registered pid: {client_pid}")
-                            self.start_read_client(client_pid)
-            finally:
-                self.register_pipe_lock.release_lock()
+            client_pids = self.register_pipe_reader.read().strip()
+            if client_pids:
+                for client_pid in client_pids.split("\n"):
+                    client_pid = int(client_pid)
+                    self.registered_client_pids.append(client_pid)
+                    print(f"Registered pid: {client_pid}")
+                    self.start_read_client(client_pid)
 
         register_th = threading.Thread(target=register_pipe)
         register_th.start()
@@ -81,25 +77,18 @@ class Server:
 
         def read_client():
             receive_pipe_path = Path(f"{client_pid}_to_server_pipe")
-            receive_pipe = os.open(receive_pipe_path, os.O_RDONLY)
-            receive_pipe_lock = PIPELock(receive_pipe_path)
+            receive_pipe = PIPEReader(receive_pipe_path)
 
             while True:
                 # TODO: Should I keep receive_pipe open?
                 # If we close it, it doesn't work well.
                 time.sleep(1e-4)
-                receive_pipe_lock.acquire_lock()
-                try:
-                    rlist, _, _ = select.select([receive_pipe], [], [])
-                    if rlist:
-                        request = os.read(receive_pipe, 1024).decode()
-                        if request and request.strip():
-                            print(f"Read from client {client_pid}: {request}")
-                            # TODO: Should the read_client logic be separated
-                            # from the handle logic?
-                            self.handle_request(client_pid, request)
-                finally:
-                    receive_pipe_lock.release_lock()
+                request = receive_pipe.read().strip()
+                if request:
+                    print(f"Read from client {client_pid}: {request}")
+                    # TODO: Should the read_client logic be separated
+                    # from the handle logic?
+                    self.handle_request(client_pid, request)
 
         read_th = threading.Thread(target=read_client)
         read_th.start()
@@ -148,20 +137,11 @@ class Server:
             response (int): The response value as an integer.
         """
         send_pipe_path = Path(f"server_to_{pid}_pipe")
-        send_pipe_lock = PIPELock(send_pipe_path)
+        send_pipe = PIPEWriter(send_pipe_path)
 
-        msg = f"{response}".encode()
-
-        send_pipe_lock.acquire_lock()
-        send_pipe = os.open(send_pipe_path, os.O_WRONLY)
-        try:
-            _, wlist, _ = select.select([], [send_pipe], [], 1e-4)
-            if wlist:
-                os.write(send_pipe, msg)
-                print(f"Send response to client {pid}: {msg.decode()}")
-        finally:
-            os.close(send_pipe)
-            send_pipe_lock.release_lock()
+        msg = f"{response}"
+        send_pipe.write(msg)
+        print(f"Send response to client {pid}: {msg}")
 
 
 def start_server():
