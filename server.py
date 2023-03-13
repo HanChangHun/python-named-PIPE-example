@@ -4,19 +4,25 @@ from pathlib import Path
 from client_handler import ClientHandler
 
 from utils.pipe_reader import PIPEReader
-from utils.pipe_writer import PIPEWriter
 from utils.utils import make_pipe
 
 
 class Server:
-    def __init__(self) -> None:
-        """Initialize the Server object.
+    """
+    A class to handle client requests and responses using pipes.
 
-        Initializes the Server object with register_pipe_path, registered_pids,
-        register_pipe, and register_pipe_lock. The pipe for register is created
-        using make_pipe() function. The Server object also has PIPELocks for
-        handling concurrency.
-        """
+    Attributes:
+        client_states (dict): A dictionary to store client states.
+
+    Methods:
+        start: Starts the server by watching client states and starting the register pipe.
+        start_register_pipe: Starts a thread to read the register pipe and handle client registration.
+        watch_client_states: Starts a thread to watch client states and handle client requests and responses.
+        start_read_client: Starts a thread to read a client's requests and responses using pipes.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the Server object."""
         self.th_lock = threading.Lock()
         self.register_pipe_path = Path("register_pipe")
         self.client_states = dict()
@@ -26,35 +32,38 @@ class Server:
         self.register_pipe_reader = PIPEReader(self.register_pipe_path)
 
     def __del__(self) -> None:
-        """Destructor of Server object.
-
-        Remove the register_pipe if it exists.
         """
+        Destructor of Server object.
 
-        # TODO: This function is not called via KeyboardInterrupt.
-        # Therefore, the register_pipe does not disappear.
+        Removes the register pipe if it exists.
+        """
         if self.register_pipe_path.exists():
             self.register_pipe_path.unlink()
 
     def start(self):
+        """
+        Starts the server by watching client states and starting the register pipe.
+        """
         self.watch_client_states()
         self.start_register_pipe()
 
     def start_register_pipe(self) -> None:
-        """Starts the register pipe thread.
-
-        The thread waits for a pid to be received from the client, adds the pid
-        to the list of registered pids, and starts reading from the client.
+        """
+        Starts a thread to read the register pipe and handle client registration.
         """
 
         def read_register_pipe():
-            """Reads from the register pipe and handles the client registration."""
+            """
+            Reads from the register pipe and handles the client registration.
+            """
             while True:
                 time.sleep(1e-4)
                 read_register_pipe_loop()
 
         def read_register_pipe_loop():
-            """Reads a message from the register pipe and handles the client registration."""
+            """
+            Reads a message from the register pipe and handles the client registration.
+            """
             msgs = self.register_pipe_reader.read().strip()
             if msgs:
                 for msg in msgs.split("\n"):
@@ -74,16 +83,24 @@ class Server:
         register_th.start()
 
     def watch_client_states(self):
+        """
+        Starts a thread to watch client states and handle client requests and responses.
+        """
+
         def watch():
-            """Reads from the register pipe and handles the client registration."""
+            """
+            Watches client states and handles client requests and responses.
+            """
             while True:
                 time.sleep(1e-4)
                 watch_client_states_loop()
 
         def watch_client_states_loop():
+            """
+            Watches client states and handles client requests and responses.
+            """
             client_states_copy = self.client_states.copy()
 
-            # for pid, state in self.client_states.items():
             for pid, state in client_states_copy.items():
                 if state == "register":
                     self.th_lock.acquire()
@@ -109,6 +126,7 @@ class Server:
         """
 
         def read_client():
+            """Reads the client requests."""
             client_handler = ClientHandler(client_pid)
 
             while True:
@@ -129,8 +147,6 @@ class Server:
                         f"[pid: {client_pid} | server] "
                         f"Read from client: {request}"
                     )
-                    # TODO: Should the read_client logic be separated
-                    # from the handle logic?
                     client_handler.handle(request)
 
         read_th = threading.Thread(target=read_client)
@@ -138,11 +154,13 @@ class Server:
 
 
 def start_server():
+    """starts the server."""
     server = Server()
     server.start()
 
 
 def main():
+    """Main function to start the server."""
     start_server()
 
 

@@ -6,6 +6,7 @@ from utils.pipe_writer import PIPEWriter
 
 class ClientHandler:
     def __init__(self, pid):
+        """Initializes the ClientHandler object."""
         self.pid = pid
         self.read_pipe_path = Path(f"{pid}_to_server_pipe")
         self.write_pipe_path = Path(f"server_to_{pid}_pipe")
@@ -14,6 +15,10 @@ class ClientHandler:
         self.write_pipe = PIPEWriter(self.write_pipe_path)
 
     def __del__(self):
+        """Destructor of ClientHandler object.
+
+        Removes the read pipe, write pipe, and lock files if they exist.
+        """
         if self.write_pipe_path.exists():
             self.write_pipe_path.unlink()
 
@@ -27,12 +32,30 @@ class ClientHandler:
             self.read_pipe.pipe_lock.lock_file_path.unlink()
 
     def read(self):
+        """Reads from the read pipe.
+
+        Returns:
+            str: The data read from the pipe.
+
+        """
         return self.read_pipe.read(busy_wait=False)
 
     def write(self, msg):
+        """Writes to the write pipe.
+
+        Args:
+            msg (str): The message to be written to the pipe.
+
+        """
         self.write_pipe.write(msg)
 
     def handle(self, request_data):
+        """Handles the request from the client and sends the response back.
+
+        Args:
+            request_data (str): The request data received from the client.
+
+        """
         data = self.parse_request(request_data)
         response = self.process_request(data)
         self.send_response(response)
