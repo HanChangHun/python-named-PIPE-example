@@ -11,8 +11,10 @@ class PIPEReader:
         self.pipe_lock = PIPELock(pipe_path)
         self.pipe = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
 
-    def read(self):
+    def read(self, busy_wait=True):
         """Reads the response from the pipe."""
+
+        response = ""
         while True:
             self.pipe_lock.acquire_lock()
             try:
@@ -21,6 +23,8 @@ class PIPEReader:
                     response = os.read(self.pipe, 1024).decode().strip()
                     if response:
                         break
+                if not busy_wait:
+                    break
 
             finally:
                 self.pipe_lock.release_lock()

@@ -1,10 +1,8 @@
-import os
 import time
-import select
 import threading
 from pathlib import Path
+from client_handler import ClientHandler
 
-from utils.pipe_lock import PIPELock
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
 from utils.utils import make_pipe
@@ -19,15 +17,11 @@ class Server:
         using make_pipe() function. The Server object also has PIPELocks for
         handling concurrency.
         """
+        self.th_lock = threading.Lock()
         self.register_pipe_path = Path("register_pipe")
-        self.registered_client_pids = []
+        self.client_states = dict()
 
         make_pipe(self.register_pipe_path)
-
-        # self.register_pipe = os.open(
-        #     self.register_pipe_path, os.O_RDONLY | os.O_NONBLOCK
-        # )
-        # self.register_pipe_lock = PIPELock(self.register_pipe_path, init=True)
 
         self.register_pipe_reader = PIPEReader(self.register_pipe_path)
 
@@ -42,6 +36,10 @@ class Server:
         if self.register_pipe_path.exists():
             self.register_pipe_path.unlink()
 
+    def start(self):
+        self.watch_client_states()
+        self.start_register_pipe()
+
     def start_register_pipe(self) -> None:
         """Starts the register pipe thread.
 
@@ -49,24 +47,59 @@ class Server:
         to the list of registered pids, and starts reading from the client.
         """
 
-        def register_pipe():
+        def read_register_pipe():
             """Reads from the register pipe and handles the client registration."""
             while True:
                 time.sleep(1e-4)
-                read_register_pipe()
+                read_register_pipe_loop()
 
-        def read_register_pipe():
+        def read_register_pipe_loop():
             """Reads a message from the register pipe and handles the client registration."""
-            client_pids = self.register_pipe_reader.read().strip()
-            if client_pids:
-                for client_pid in client_pids.split("\n"):
-                    client_pid = int(client_pid)
-                    self.registered_client_pids.append(client_pid)
-                    print(f"Registered pid: {client_pid}")
-                    self.start_read_client(client_pid)
+            msgs = self.register_pipe_reader.read().strip()
+            if msgs:
+                for msg in msgs.split("\n"):
+                    msg_split = msg.split(" ")
+                    op = msg_split[0]
+                    pid = int(msg_split[1])
+                    self.th_lock.acquire()
+                    if op == "register":
+                        self.client_states[pid] = "register"
+                        print(f"[pid: {pid} | server] Registered")
+                    elif op == "unregister":
+                        self.client_states[pid] = "unregister"
+                        print(f"[pid: {pid} | server] Unregistered")
+                    self.th_lock.release()
 
-        register_th = threading.Thread(target=register_pipe)
+        register_th = threading.Thread(target=read_register_pipe)
         register_th.start()
+
+    def watch_client_states(self):
+        def watch():
+            """Reads from the register pipe and handles the client registration."""
+            while True:
+                time.sleep(1e-4)
+                watch_client_states_loop()
+
+        def watch_client_states_loop():
+            client_states_copy = self.client_states.copy()
+
+            # for pid, state in self.client_states.items():
+            for pid, state in client_states_copy.items():
+                if state == "register":
+                    self.th_lock.acquire()
+                    self.start_read_client(pid)
+                    self.client_states[pid] = "start"
+                    self.th_lock.release()
+                    print(f"[pid : {pid} | server] Started")
+
+                elif state == "stop":
+                    self.th_lock.acquire()
+                    del self.client_states[pid]
+                    self.th_lock.release()
+                    print(f"[pid : {pid} | server] Terminated")
+
+        watch_th = threading.Thread(target=watch)
+        watch_th.start()
 
     def start_read_client(self, client_pid: int) -> None:
         """Starts the read client thread.
@@ -76,77 +109,37 @@ class Server:
         """
 
         def read_client():
-            receive_pipe_path = Path(f"{client_pid}_to_server_pipe")
-            receive_pipe = PIPEReader(receive_pipe_path)
+            client_handler = ClientHandler(client_pid)
 
             while True:
-                # TODO: Should I keep receive_pipe open?
-                # If we close it, it doesn't work well.
                 time.sleep(1e-4)
-                request = receive_pipe.read().strip()
+
+                self.th_lock.acquire()
+                if self.client_states[client_pid] == "unregister":
+                    self.client_states[client_pid] = "stop"
+                    self.th_lock.release()
+                    print(f"[pid : {client_pid} | server] Stopped")
+                    del client_handler
+                    break
+                self.th_lock.release()
+
+                request = client_handler.read()
                 if request:
-                    print(f"Read from client {client_pid}: {request}")
+                    print(
+                        f"[pid: {client_pid} | server] "
+                        f"Read from client: {request}"
+                    )
                     # TODO: Should the read_client logic be separated
                     # from the handle logic?
-                    self.handle_request(client_pid, request)
+                    client_handler.handle(request)
 
         read_th = threading.Thread(target=read_client)
         read_th.start()
 
-    def handle_request(self, pid: int, request_data: str) -> None:
-        """Handles the request from the client.
-
-        Args:
-            pid (int): The process ID of the client.
-            request (str): The request received from the client.
-        """
-        data = self.parse_request(request_data)
-        response = self.process_request(data)
-        self.send_response(pid, response)
-
-    def parse_request(self, request_data: str) -> int:
-        """Parses the request and converts it to an integer.
-
-        Args:
-            request (str): The request received from the client.
-
-        Returns:
-            int: The request value as an integer.
-        """
-        return int(request_data)
-
-    def process_request(self, data: int) -> int:
-        """Processes the request and generates the response.
-
-        This method currently doubles the value of the request, but it can be
-        modified to handle more complex logic in the future.
-
-        Args:
-            data (int): The request value as an integer.
-
-        Returns:
-            int: The response value as an integer.
-        """
-        return data * 2
-
-    def send_response(self, pid: int, response: int) -> None:
-        """Sends the response to the client.
-
-        Args:
-            pid (int): The process ID of the client.
-            response (int): The response value as an integer.
-        """
-        send_pipe_path = Path(f"server_to_{pid}_pipe")
-        send_pipe = PIPEWriter(send_pipe_path)
-
-        msg = f"{response}"
-        send_pipe.write(msg)
-        print(f"Send response to client {pid}: {msg}")
-
 
 def start_server():
     server = Server()
-    server.start_register_pipe()
+    server.start()
 
 
 def main():

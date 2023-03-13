@@ -21,7 +21,7 @@ def start_client_proc() -> None:
 def main() -> None:
     """Start two processes, one to receive data and two to send data."""
     server_proc = start_server_proc()
-    for _ in range(10):
+    for _ in range(100):
         start_client_proc()
 
     try:

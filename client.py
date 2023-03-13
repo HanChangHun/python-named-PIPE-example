@@ -1,10 +1,8 @@
 import os
 import time
 import random
-import select
 from pathlib import Path
 
-from utils.pipe_lock import PIPELock
 from utils.pipe_writer import PIPEWriter
 from utils.pipe_reader import PIPEReader
 from utils.utils import make_pipe
@@ -32,23 +30,16 @@ class Client:
         self.pipe_writer = PIPEWriter(self.send_pipe_path)
         self.pipe_reader = PIPEReader(self.receive_pipe_path)
 
-    def __del__(self) -> None:
-        """Clean up the client object when it is deleted.
-
-        Removes the send_pipe and receive_pipe if they exist.
-        """
-        if self.send_pipe_path.exists():
-            self.send_pipe_path.unlink()
-
-        if self.receive_pipe_path.exists():
-            self.receive_pipe_path.unlink()
-
     def start(self) -> None:
         self.register()
         self.request()
+        self.unregister()
 
     def register(self) -> None:
-        self.register_pipe_writer.write(f"{self.pid}\n")
+        self.register_pipe_writer.write(f"register {self.pid}\n")
+
+    def unregister(self) -> None:
+        self.register_pipe_writer.write(f"unregister {self.pid}\n")
 
     def request(self) -> None:
         """Make a request to the server.
@@ -56,7 +47,6 @@ class Client:
         Repeats this 10 times.
         """
         for _ in range(10):
-            time.sleep(1e-4)
             data = self.generate_data()
 
             self.pipe_writer.write(f"{data}")
@@ -70,9 +60,10 @@ class Client:
         """Reads the response from the receive_pipe."""
         response = self.pipe_reader.read()
         if response:
-            print(f"[pid:{self.pid}] Received response: {response}")
+            print(f"[pid: {self.pid} | client] Received response: {response}")
             if int(response) != org_data * 2:
                 raise Exception(
+                    f"[pid: {self.pid} | client] "
                     f"Response data is not correct. "
                     f"Expected: {org_data*2}, "
                     f"Received: {response}"
