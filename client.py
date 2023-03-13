@@ -1,6 +1,7 @@
 import os
 import random
 from pathlib import Path
+from multi_process_logger import MultiProcessLogger
 
 from utils.pipe_writer import PIPEWriter
 from utils.pipe_reader import PIPEReader
@@ -8,13 +9,16 @@ from utils.utils import make_pipe
 
 
 class Client:
-    def __init__(self) -> None:
-        """Initialize the client object.
+    def __init__(self, logger: MultiProcessLogger) -> None:
+        """
+        Initialize the client object.
 
         Initializes the client object with its process ID (PID), paths for the
         register pipe, write pipe, and read pipe. The write and read pipes are
         created using the make_pipe() function.
         """
+        self.logger = logger
+
         self.pid = os.getpid()
 
         self.register_pipe_path = Path("register_pipe")
@@ -43,7 +47,8 @@ class Client:
         self.register_pipe.write(f"unregister {self.pid}\n")
 
     def request(self) -> None:
-        """Sends requests to the server.
+        """
+        Sends requests to the server.
 
         Repeats this 10 times.
         """
@@ -54,7 +59,8 @@ class Client:
             self.read_response(data)
 
     def generate_data(self) -> int:
-        """Generates a random integer data.
+        """
+        Generates a random integer data.
 
         Returns:
             A random integer between 1 and 100.
@@ -62,7 +68,8 @@ class Client:
         return random.randint(1, 100)
 
     def read_response(self, org_data) -> None:
-        """Reads the response from the read_pipe and verifies the response.
+        """
+        Reads the response from the read_pipe and verifies the response.
 
         Args:
             org_data: The original data that was sent to the server.
@@ -72,19 +79,21 @@ class Client:
         """
         response = self.read_pipe.read()
         if response:
-            print(f"[pid: {self.pid} | client] Received response: {response}")
+            self.logger.log(
+                f"[pid : {self.pid} | client] Received response: {response}"
+            )
             if int(response) != org_data * 2:
                 raise Exception(
-                    f"[pid: {self.pid} | client] "
+                    f"[pid : {self.pid} | client] "
                     f"Response data is not correct. "
                     f"Expected: {org_data*2}, "
                     f"Received: {response}"
                 )
 
 
-def start_client():
+def start_client(logger: MultiProcessLogger):
     """Starts the client."""
-    client = Client()
+    client = Client(logger)
     client.start()
 
 

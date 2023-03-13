@@ -1,13 +1,16 @@
 from pathlib import Path
+from multi_process_logger import MultiProcessLogger
 
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
 
 
 class ClientHandler:
-    def __init__(self, pid):
+    def __init__(self, pid, logger: MultiProcessLogger):
         """Initializes the ClientHandler object."""
         self.pid = pid
+        self.logger = logger
+
         self.read_pipe_path = Path(f"{pid}_to_server_pipe")
         self.write_pipe_path = Path(f"server_to_{pid}_pipe")
 
@@ -95,4 +98,6 @@ class ClientHandler:
 
         msg = f"{response}"
         self.write(msg)
-        print(f"[pid: {self.pid} | server] Send response to client: {msg}")
+        self.logger.log(
+            f"[pid : {self.pid} | server] Send response to client: {msg}"
+        )
