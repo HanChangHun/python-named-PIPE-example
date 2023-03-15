@@ -28,17 +28,23 @@ class PIPEReader:
         """
         response = ""
         while True:
-            self.pipe_lock.acquire_lock()
+            self.pipe_lock.acquire_read_lock()
             try:
-                rlist, _, _ = select.select([self.pipe], [], [], 1e-4)
-                if rlist:
-                    response = os.read(self.pipe, 1024).decode().strip()
-                    if response:
+                response = b""
+                while True:
+                    chunk = os.read(self.pipe, 1024)
+                    if not chunk:
                         break
+                    response += chunk
+
+                if response:
+                    response = response.decode().strip()
+                    break
+
                 if not busy_wait:
                     break
 
             finally:
-                self.pipe_lock.release_lock()
+                self.pipe_lock.release_read_lock()
 
         return response

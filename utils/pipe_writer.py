@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import time
 
 from utils.pipe_lock import PIPELock
 
@@ -22,8 +23,17 @@ class PIPEWriter:
         Args:
             message (str): The message to write to the pipe.
         """
-        self.pipe_lock.acquire_lock()
-        self.pipe = os.open(self.pipe_path, os.O_WRONLY)
+        self.pipe_lock.acquire_write_lock()
+
+        while True:
+            try:
+                self.pipe = os.open(
+                    self.pipe_path, os.O_WRONLY | os.O_NONBLOCK
+                )
+                break
+            except Exception as e:
+                time.sleep(1e-1)
+
         try:
             os.write(self.pipe, message.encode())
 
@@ -33,4 +43,4 @@ class PIPEWriter:
 
         finally:
             os.close(self.pipe)
-            self.pipe_lock.release_lock()
+            self.pipe_lock.release_write_lock()

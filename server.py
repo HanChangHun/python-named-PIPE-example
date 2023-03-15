@@ -28,15 +28,6 @@ class Server:
 
         self.register_pipe_reader = PIPEReader(self.register_pipe_path)
 
-    def __del__(self) -> None:
-        """
-        Destructor of Server object.
-
-        Removes the register pipe if it exists.
-        """
-        if self.register_pipe_path.exists():
-            self.register_pipe_path.unlink()
-
     def start(self):
         """Starts the server by watching client states and starting the
         register pipe."""
@@ -70,11 +61,15 @@ class Server:
 
                     if op == "register":
                         self.client_states[pid] = "register"
-                        self.logger.log(f"logger [pid : {pid}] Registered")
+                        self.logger.log(
+                            f"[pid : {pid}] Client registration done."
+                        )
 
                     elif op == "unregister":
                         self.client_states[pid] = "unregister"
-                        self.logger.log(f"[pid : {pid}] Unregistered")
+                        self.logger.log(
+                            f"[pid : {pid}] Client unregistration done"
+                        )
 
                     self.th_lock.release()
 

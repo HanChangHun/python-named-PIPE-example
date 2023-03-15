@@ -41,6 +41,7 @@ class Client:
     def register(self) -> None:
         """Registers the client with the server."""
         self.register_pipe.write(f"register {self.pid}\n")
+        self.logger.log(f"[pid : {self.pid} | client] Registered with server.")
 
     def unregister(self) -> None:
         """Unregisters the client from the server."""

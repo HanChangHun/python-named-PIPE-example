@@ -21,7 +21,7 @@ class MultiProcessLogger:
         self.logger.setLevel(self.log_level)
 
         formatter = logging.Formatter(
-            "[%(asctime)s.%(msecs)04d] [%(levelname)s] %(message)s",
+            "[%(asctime)s.%(msecs)06d] [%(levelname)s] %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 

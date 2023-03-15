@@ -12,7 +12,7 @@ class PIPELock:
             removing it if it exists. Defaults to False.
         """
         self.lock_file_path = pipe_path.parent / f"{pipe_path.name}.lock"
-        self.lock = fasteners.InterProcessLock(self.lock_file_path)
+        self.lock = fasteners.InterProcessReaderWriterLock(self.lock_file_path)
 
         self.init = init
 
@@ -24,14 +24,26 @@ class PIPELock:
         if self.lock_file_path.exists():
             self.lock_file_path.unlink()
 
-    def acquire_lock(self) -> None:
+    def acquire_read_lock(self) -> None:
         """Acquire the lock by creating the lock file with exclusive access."""
-        self.lock.acquire()
+        self.lock.acquire_read_lock()
 
-    def release_lock(self) -> None:
+    def acquire_write_lock(self) -> None:
+        """Acquire the lock by creating the lock file with exclusive access."""
+        self.lock.acquire_write_lock()
+
+    def release_read_lock(self) -> None:
         """Release the lock by closing and deleting the lock file.
 
         Raises:
             Exception: If the lock file is not open.
         """
-        self.lock.release()
+        self.lock.release_read_lock()
+
+    def release_write_lock(self) -> None:
+        """Release the lock by closing and deleting the lock file.
+
+        Raises:
+            Exception: If the lock file is not open.
+        """
+        self.lock.release_write_lock()

@@ -15,6 +15,13 @@ def start_server_proc(logger) -> Process:
     return proc
 
 
+def start_server_th(logger) -> None:
+    """Start a separate process to send data to a named pipe."""
+    th = threading.Thread(target=start_server, args=(logger,))
+    th.start()
+    return th
+
+
 def start_client_proc(logger) -> None:
     """Start a separate process to send data to a named pipe."""
     proc = Process(target=start_client, args=(logger,))
@@ -26,11 +33,13 @@ def main() -> None:
     logger = MultiProcessLogger(flush_interval=1e-4, log_file=Path("test.log"))
 
     server_proc = start_server_proc(logger)
-    for _ in range(5):
+    # server_th = start_server_th(logger)
+    for _ in range(1000):
         start_client_proc(logger)
 
     try:
         server_proc.join()
+        # server_th.join()
     except KeyboardInterrupt:
         subprocess.run(["rm *_pipe *.lock"], shell=True)
 
