@@ -1,7 +1,7 @@
 import time
 import threading
 from pathlib import Path
-from client_handler import ClientHandler
+from request_handler import RequestHandler
 from multi_process_logger import MultiProcessLogger
 
 from utils.pipe_reader import PIPEReader
@@ -115,7 +115,7 @@ class Server:
 
         def handle_client():
             """Reads the client requests."""
-            client_handler = ClientHandler(client_pid, logger=self.logger)
+            client_handler = RequestHandler(client_pid, logger=self.logger)
 
             while True:
                 time.sleep(1e-4)

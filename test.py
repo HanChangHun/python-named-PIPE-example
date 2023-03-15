@@ -30,7 +30,9 @@ def start_client_proc(logger) -> None:
 
 def main() -> None:
     """Start two processes, one to receive data and two to send data."""
-    logger = MultiProcessLogger(flush_interval=1e-4, log_file=Path("test.log"))
+    logger = MultiProcessLogger(
+        flush_interval=1e-4, log_file=Path("logs/test.log")
+    )
 
     server_proc = start_server_proc(logger)
     # server_th = start_server_th(logger)

@@ -5,7 +5,7 @@ from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
 
 
-class ClientHandler:
+class RequestHandler:
     def __init__(self, pid, logger: MultiProcessLogger):
         """Initializes the ClientHandler object."""
         self.pid = pid
