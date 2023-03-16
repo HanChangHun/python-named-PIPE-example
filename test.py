@@ -1,5 +1,5 @@
-from pathlib import Path
 from multiprocessing import Process
+from pathlib import Path
 
 from client.client import start_client
 from server.server import start_server
@@ -14,13 +14,7 @@ def start_server_proc(register_pipe_path, logger) -> Process:
 
 
 def start_client_proc(register_pipe_path, logger) -> Process:
-    proc = Process(
-        target=start_client,
-        args=(
-            register_pipe_path,
-            logger,
-        ),
-    )
+    proc = Process(target=start_client, args=(register_pipe_path, logger))
     proc.start()
 
     return proc
@@ -29,10 +23,13 @@ def start_client_proc(register_pipe_path, logger) -> Process:
 def main() -> None:
     register_pipe_path = Path("register_pipe")
     logger = MultiProcessLogger(log_file=Path("logs/test.log"))
+
     server_proc = start_server_proc(register_pipe_path, logger)
+
     client_procs = []
     for _ in range(10):
         client_proc = start_client_proc(register_pipe_path, logger)
+        client_procs.append(client_proc)
 
     for client_proc in client_procs:
         client_proc.join()

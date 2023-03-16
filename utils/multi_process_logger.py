@@ -5,11 +5,27 @@ from pathlib import Path
 
 
 class MultiProcessLogger:
+    """
+    A multi-process logger class that handles logging messages to both the console and a file.
+
+    Attributes:
+        log_level (int): The logging level.
+        log_file (Path): The path to the log file.
+        logger (logging.Logger): The logging instance.
+    """
+
     def __init__(
         self,
         log_level=logging.INFO,
         log_file: Path = None,
     ):
+        """
+        Initialize the MultiProcessLogger object.
+
+        Args:
+            log_level (int, optional): The logging level. Defaults to logging.INFO.
+            log_file (Path, optional): The path to the log file. Defaults to None.
+        """
         self.log_level = log_level
         self.log_file = log_file
 
@@ -36,6 +52,13 @@ class MultiProcessLogger:
             self.logger.addHandler(file_handler)
 
     def log(self, message, level=logging.INFO):
+        """
+        Log the given message at the specified level.
+
+        Args:
+            message (str): The message to be logged.
+            level (int, optional): The logging level. Defaults to logging.INFO.
+        """
         frame = inspect.currentframe().f_back
         filename = inspect.getfile(frame).split("/")[-1]
         line_number = frame.f_lineno
@@ -44,6 +67,9 @@ class MultiProcessLogger:
         self.logger.log(level, log_message)
 
     def shutdown(self):
+        """
+        Shutdown the logger and close all associated handlers.
+        """
         for handler in self.logger.handlers:
             handler.close()
             self.logger.removeHandler(handler)
