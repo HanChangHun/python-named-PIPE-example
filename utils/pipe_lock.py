@@ -19,6 +19,11 @@ class PIPELock:
         if init:
             self.init_lock()
 
+    def __del__(self):
+        del self.lock
+        if self.lock_file_path.exists():
+            self.lock_file_path.unlink()
+
     def init_lock(self) -> None:
         """Remove the lock file if it exists."""
         if self.lock_file_path.exists():

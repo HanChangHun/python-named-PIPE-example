@@ -1,10 +1,10 @@
 import os
 import random
 from pathlib import Path
-from multi_process_logger import MultiProcessLogger
 
-from utils.pipe_writer import PIPEWriter
+from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
+from utils.pipe_writer import PIPEWriter
 from utils.utils import make_pipe
 
 
@@ -87,7 +87,7 @@ class Client:
                 raise Exception(
                     f"[pid : {self.pid} | client] "
                     f"Response data is not correct. "
-                    f"Expected: {org_data*2}, "
+                    f"Expected: {org_data * 2}, "
                     f"Received: {response}"
                 )
 
@@ -96,12 +96,3 @@ def start_client(logger: MultiProcessLogger):
     """Starts the client."""
     client = Client(logger)
     client.start()
-
-
-def main():
-    """Main function that starts the client."""
-    start_client()
-
-
-if __name__ == "__main__":
-    main()

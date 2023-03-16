@@ -1,5 +1,7 @@
 from pathlib import Path
-from multi_process_logger import MultiProcessLogger
+import threading
+import time
+from utils.multi_process_logger import MultiProcessLogger
 
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
@@ -11,46 +13,30 @@ class RequestHandler:
         self.pid = pid
         self.logger = logger
 
+        self._stop = False
+
         self.read_pipe_path = Path(f"{pid}_to_server_pipe")
         self.write_pipe_path = Path(f"server_to_{pid}_pipe")
 
         self.read_pipe = PIPEReader(self.read_pipe_path)
         self.write_pipe = PIPEWriter(self.write_pipe_path)
 
-    def __del__(self):
-        """Destructor of ClientHandler object.
+    def start(self):
+        read_th = threading.Thread(target=self.read_client_pipe_loop)
+        read_th.start()
 
-        Removes the read pipe, write pipe, and lock files if they exist.
-        """
-        if self.write_pipe_path.exists():
-            self.write_pipe_path.unlink()
+    def stop(self):
+        self._stop = True
 
-        if self.read_pipe_path.exists():
-            self.read_pipe_path.unlink()
-
-        if self.write_pipe.pipe_lock.lock_file_path.exists():
-            self.write_pipe.pipe_lock.lock_file_path.unlink()
-
-        if self.read_pipe.pipe_lock.lock_file_path.exists():
-            self.read_pipe.pipe_lock.lock_file_path.unlink()
-
-    def read(self):
-        """Reads from the read pipe.
-
-        Returns:
-            str: The data read from the pipe.
-
-        """
-        return self.read_pipe.read(busy_wait=False)
-
-    def write(self, msg):
-        """Writes to the write pipe.
-
-        Args:
-            msg (str): The message to be written to the pipe.
-
-        """
-        self.write_pipe.write(msg)
+    def read_client_pipe_loop(self):
+        while not self._stop:
+            time.sleep(1e-4)
+            request = self.read_pipe.read(busy_wait=False)
+            if request:
+                self.logger.log(
+                    f"[pid : {self.pid}] " f"Read from client: {request}"
+                )
+                self.handle(request)
 
     def handle(self, request_data):
         """Handles the request from the client and sends the response back.
@@ -97,7 +83,7 @@ class RequestHandler:
         """
 
         msg = f"{response}"
-        self.write(msg)
+        self.write_pipe.write(msg)
         self.logger.log(
             f"[pid : {self.pid} | server] Send response to client: {msg}"
         )

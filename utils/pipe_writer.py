@@ -15,6 +15,11 @@ class PIPEWriter:
         self.pipe_path = pipe_path
         self.pipe_lock = PIPELock(pipe_path)
 
+    def __del__(self):
+        del self.pipe_lock
+        if self.pipe_path.exists():
+            self.pipe_path.unlink()
+
     def write(self, message: str):
         """Writes a message to the pipe.
 

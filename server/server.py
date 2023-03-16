@@ -1,9 +1,10 @@
-import time
 import threading
+import time
 from pathlib import Path
-from request_handler import RequestHandler
-from multi_process_logger import MultiProcessLogger
+from server.registration_handler import RegistrationHandler
 
+from server.request_handler import RequestHandler
+from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
 from utils.utils import make_pipe
 
@@ -20,19 +21,26 @@ class Server:
         """Initialize the Server object."""
         self.logger = logger
 
-        self.th_lock = threading.Lock()
+        # self.th_lock = threading.Lock()
+        # self._stop = False
         self.register_pipe_path = Path("register_pipe")
-        self.client_states = dict()
+        # self.client_states = dict()
 
-        make_pipe(self.register_pipe_path)
+        # make_pipe(self.register_pipe_path)
 
-        self.register_pipe_reader = PIPEReader(self.register_pipe_path)
+        # self.register_pipe_reader = PIPEReader(self.register_pipe_path)
+
+        self.registration_handler = RegistrationHandler(
+            self, self.register_pipe_path, self.logger
+        )
 
     def start(self):
         """Starts the server by watching client states and starting the
         register pipe."""
-        self.start_watch_client_states()
-        self.start_register_pipe_handler()
+        self.registration_handler.start()
+
+    def stop(self):
+        self.registration_handler.stop()
 
     def start_register_pipe_handler(self) -> None:
         """Starts a thread to handle registration requests from clients via
@@ -105,6 +113,11 @@ class Server:
 
         watch_th = threading.Thread(target=watch_client_states)
         watch_th.start()
+
+    def get_request_handler(self, pid):
+        request_handler = RequestHandler(pid, logger=self.logger)
+
+        return request_handler
 
     def start_handle_client(self, client_pid: int) -> None:
         """Starts the read client thread.

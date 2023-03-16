@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import select
 
 from utils.pipe_lock import PIPELock
 
@@ -15,6 +14,11 @@ class PIPEReader:
         self.pipe_path = pipe_path
         self.pipe_lock = PIPELock(pipe_path)
         self.pipe = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+
+    def __del__(self):
+        del self.pipe_lock
+        if self.pipe_path.exists():
+            self.pipe_path.unlink()
 
     def read(self, busy_wait=True) -> str:
         """Reads the response from the pipe.
