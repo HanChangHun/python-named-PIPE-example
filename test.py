@@ -6,27 +6,33 @@ from server.server import start_server
 from utils.multi_process_logger import MultiProcessLogger
 
 
-def start_server_proc(logger) -> Process:
-    register_pipe_path = Path("register_pipe")
+def start_server_proc(register_pipe_path, logger) -> Process:
     proc = Process(target=start_server, args=(register_pipe_path, logger))
     proc.start()
 
     return proc
 
 
-def start_client_proc(logger) -> Process:
-    proc = Process(target=start_client, args=(logger,))
+def start_client_proc(register_pipe_path, logger) -> Process:
+    proc = Process(
+        target=start_client,
+        args=(
+            register_pipe_path,
+            logger,
+        ),
+    )
     proc.start()
 
     return proc
 
 
 def main() -> None:
+    register_pipe_path = Path("register_pipe")
     logger = MultiProcessLogger(log_file=Path("logs/test.log"))
-    server_proc = start_server_proc(logger)
+    server_proc = start_server_proc(register_pipe_path, logger)
     client_procs = []
-    for _ in range(100):
-        client_proc = start_client_proc(logger)
+    for _ in range(10):
+        client_proc = start_client_proc(register_pipe_path, logger)
 
     for client_proc in client_procs:
         client_proc.join()

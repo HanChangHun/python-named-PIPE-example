@@ -1,5 +1,4 @@
 from pathlib import Path
-import time
 
 from server.registration_handler import RegistrationHandler
 from utils.multi_process_logger import MultiProcessLogger

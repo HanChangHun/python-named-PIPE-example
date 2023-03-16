@@ -1,6 +1,7 @@
 import os
 import random
 from pathlib import Path
+from client.registrar import Registrar
 
 from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
@@ -9,19 +10,23 @@ from utils.utils import make_pipe
 
 
 class Client:
-    def __init__(self, logger: MultiProcessLogger) -> None:
+    def __init__(
+        self, register_pipe_path: Path, logger: MultiProcessLogger
+    ) -> None:
         self.logger = logger
 
         self.pid = os.getpid()
 
-        self.register_pipe_path = Path("register_pipe")
+        # self.register_pipe_path = Path("register_pipe")
         self.write_pipe_path = Path(f"{self.pid}_to_server_pipe")
         self.read_pipe_path = Path(f"server_to_{self.pid}_pipe")
+
+        self.registrar = Registrar(self.pid, register_pipe_path, logger)
 
         make_pipe(self.write_pipe_path)
         make_pipe(self.read_pipe_path)
 
-        self.register_pipe = PIPEWriter(self.register_pipe_path)
+        # self.register_pipe = PIPEWriter(self.register_pipe_path)
         self.write_pipe = PIPEWriter(self.write_pipe_path)
         self.read_pipe = PIPEReader(self.read_pipe_path)
 
@@ -39,9 +44,11 @@ class Client:
             self.read_pipe.pipe_lock.lock_file_path.unlink()
 
     def start(self) -> None:
-        self.register()
+        # self.register()
+        self.registrar.register()
         self.request()
-        self.unregister()
+        # self.unregister()
+        self.registrar.unregister()
 
     def register(self) -> None:
         self.register_pipe.write(f"register {self.pid}\n")
@@ -81,7 +88,7 @@ class Client:
                 )
 
 
-def start_client(logger: MultiProcessLogger):
+def start_client(register_pipe_path, logger: MultiProcessLogger):
     """Starts the client."""
-    client = Client(logger)
+    client = Client(register_pipe_path, logger)
     client.start()
