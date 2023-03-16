@@ -26,6 +26,8 @@ class RegistrationHandler:
         self.pipe_path = register_pipe_path
         self.logger = logger
 
+        self._stop = False
+
         self.register_th = None
 
         self.registration: Dict[int, RequestHandler] = dict()
@@ -42,11 +44,17 @@ class RegistrationHandler:
         )
         self.register_th.start()
 
+    def stop(self):
+        """
+        Stop the registration handler's main loop.
+        """
+        self._stop = True
+
     def read_register_pipe_loop(self) -> None:
         """
         Continuously read the register pipe and handle registration messages.
         """
-        while True:
+        while not self._stop:
             time.sleep(1e-9)
             self.read_register_pipe()
 
@@ -54,7 +62,7 @@ class RegistrationHandler:
         """
         Read messages from the register pipe and handle them.
         """
-        msgs = self.pipe_reader.read().strip()
+        msgs = self.pipe_reader.read(busy_wait=False).strip()
         if msgs:
             for msg in msgs.split("\n"):
                 msg_split = msg.split(" ")

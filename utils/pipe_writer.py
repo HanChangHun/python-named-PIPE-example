@@ -37,16 +37,19 @@ class PIPEWriter:
                 # TODO: Find a better way to handle this.
                 # It raise error at first client side request.
                 # Why there is time between make pipe and open pipe?
-                print(e)
+                # print(e)
                 time.sleep(1e-9)
 
         try:
-            os.write(self.pipe, message.encode())
+            with os.fdopen(self.pipe, 'w') as pipe_w:
+                pipe_w.write(message)
+                pipe_w.flush()
+            # os.write(self.pipe, message.encode())
 
         except Exception as e:
             print(f"Error writing to pipe: {str(message)}")
             raise e
 
         finally:
-            os.close(self.pipe)
+            # os.close(self.pipe)
             self.pipe_lock.release_write_lock()

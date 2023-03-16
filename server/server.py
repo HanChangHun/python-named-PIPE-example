@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 
 from server.registration_handler import RegistrationHandler
 from utils.multi_process_logger import MultiProcessLogger
@@ -28,10 +29,16 @@ class Server:
         """
         self.registration_handler.start()
 
+    def stop(self):
+        self.registration_handler.stop()
 
-def start_server(register_pipe_path, logger) -> None:
+
+def start_server(register_pipe_path, logger, timeout=None) -> None:
     """
     Start the server.
     """
     server = Server(register_pipe_path, logger=logger)
     server.start()
+    if timeout:
+        time.sleep(timeout)
+        server.stop()
