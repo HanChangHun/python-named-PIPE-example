@@ -30,6 +30,9 @@ class Server:
         self.registration_handler.start()
 
     def stop(self):
+        """
+        Stop the server.
+        """
         self.registration_handler.stop()
 
 
