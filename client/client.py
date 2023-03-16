@@ -10,13 +10,6 @@ from utils.utils import make_pipe
 
 class Client:
     def __init__(self, logger: MultiProcessLogger) -> None:
-        """
-        Initialize the client object.
-
-        Initializes the client object with its process ID (PID), paths for the
-        register pipe, write pipe, and read pipe. The write and read pipes are
-        created using the make_pipe() function.
-        """
         self.logger = logger
 
         self.pid = os.getpid()
@@ -32,52 +25,48 @@ class Client:
         self.write_pipe = PIPEWriter(self.write_pipe_path)
         self.read_pipe = PIPEReader(self.read_pipe_path)
 
+    def __del__(self):
+        if self.write_pipe_path.exists():
+            self.write_pipe_path.unlink()
+
+        if self.read_pipe_path.exists():
+            self.read_pipe_path.unlink()
+
+        if self.write_pipe.pipe_lock.lock_file_path.exists():
+            self.write_pipe.pipe_lock.lock_file_path.unlink()
+
+        if self.read_pipe.pipe_lock.lock_file_path.exists():
+            self.read_pipe.pipe_lock.lock_file_path.unlink()
+
     def start(self) -> None:
-        """Registers, sends requests to, and unregisters from the server."""
         self.register()
         self.request()
         self.unregister()
 
     def register(self) -> None:
-        """Registers the client with the server."""
         self.register_pipe.write(f"register {self.pid}\n")
         self.logger.log(f"[pid : {self.pid} | client] Registered with server.")
 
     def unregister(self) -> None:
-        """Unregisters the client from the server."""
         self.register_pipe.write(f"unregister {self.pid}\n")
+        self.logger.log(
+            f"[pid : {self.pid} | client] Unregistered with server."
+        )
 
     def request(self) -> None:
-        """
-        Sends requests to the server.
-
-        Repeats this 10 times.
-        """
         for _ in range(10):
             data = self.generate_data()
 
             self.write_pipe.write(f"{data}")
+            self.logger.log(
+                f"[pid : {self.pid} | client] Send request: {data}"
+            )
             self.read_response(data)
 
     def generate_data(self) -> int:
-        """
-        Generates a random integer data.
-
-        Returns:
-            A random integer between 1 and 100.
-        """
         return random.randint(1, 100)
 
     def read_response(self, org_data) -> None:
-        """
-        Reads the response from the read_pipe and verifies the response.
-
-        Args:
-            org_data: The original data that was sent to the server.
-
-        Raises:
-            Exception: If the response is incorrect.
-        """
         response = self.read_pipe.read()
         if response:
             self.logger.log(

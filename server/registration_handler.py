@@ -1,6 +1,8 @@
-import time
 import threading
 from pathlib import Path
+import time
+from typing import Dict
+from server.request_handler import RequestHandler
 
 from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
@@ -18,33 +20,23 @@ class RegistrationHandler:
         self.register_pipe_path = register_pipe_path
         self.logger = logger
 
-        self._stop = False
-        self.registraion = dict()
+        self.registraion: Dict[int, RequestHandler] = dict()
 
         make_pipe(self.register_pipe_path)
         self.pipe_reader = PIPEReader(self.register_pipe_path)
 
     def start(self):
-        register_th = threading.Thread(target=self.read_register_pipe_loop)
-        register_th.start()
-
-    def stop(self):
-        self._stop = True
-        del self.pipe_reader
-        del self.registraion
+        self.register_th = threading.Thread(
+            target=self.read_register_pipe_loop
+        )
+        self.register_th.start()
 
     def read_register_pipe_loop(self):
-        """
-        Handles registration requests from clients via the register pipe.
-        """
-        while not self._stop:
-            time.sleep(1e-4)
+        while True:
+            time.sleep(1e-9)
             self.read_register_pipe()
 
     def read_register_pipe(self):
-        """
-        Reads and handles a registration message from the register pipe.
-        """
         msgs = self.pipe_reader.read().strip()
         if msgs:
             for msg in msgs.split("\n"):
@@ -55,14 +47,14 @@ class RegistrationHandler:
 
     def handle_registration(self, op, pid):
         if op == "register":
-            handle = self.server.get_request_handler(pid)
-            self.registraion[pid] = handle
-            handle.start()
+            request_handler = RequestHandler(pid, logger=self.logger)
+            self.registraion[pid] = request_handler
+            request_handler.start()
 
             self.logger.log(f"[pid : {pid}] Client registration done.")
 
         elif op == "unregister":
+            self.logger.log(f"[pid : {pid}] Get client unregistration")
             self.registraion[pid].stop()
-            del self.registraion[pid]
 
             self.logger.log(f"[pid : {pid}] Client unregistration done")
