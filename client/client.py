@@ -60,7 +60,7 @@ class Client:
                 f"[pid : {self.pid}] Get response: {response} ",
                 level=logging.INFO,
             )
-            time.sleep(1e-4)
+            time.sleep(1e-9)
 
         self.logger.log(
             f"[pid : {self.pid}] Finishing client.", level=logging.INFO

@@ -26,9 +26,7 @@ def gen_client_proc(register_pipe_path, logger) -> Process:
 def main() -> None:
     register_pipe_path = Path("register_pipe")
     log_queue = Queue()
-    logger = MultiProcessLogger(
-        log_queue, log_file=Path("logs/test.log"), log_level=logging.INFO
-    )
+    logger = MultiProcessLogger(log_queue)
 
     logging_process = LoggingProcess(log_queue, log_file=Path("logs/test.log"))
     logging_process.start()
@@ -37,7 +35,7 @@ def main() -> None:
     server_proc = start_server_proc(register_pipe_path, logger, timeout)
 
     client_procs: List[Process] = []
-    for _ in range(200):
+    for _ in range(100):
         client_proc = gen_client_proc(register_pipe_path, logger)
         client_procs.append(client_proc)
 
@@ -59,8 +57,6 @@ def main() -> None:
             Path("register_pipe").unlink()
         if Path("register_pipe.lock").exists():
             Path("register_pipe.lock").unlink()
-
-    # logger.shutdown()
 
     log_queue.put("shutdown")
     logging_process.join()
