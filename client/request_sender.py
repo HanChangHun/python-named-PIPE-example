@@ -52,7 +52,9 @@ class RequestSender:
             The response received from the server.
         """
         self.write_pipe.write(f"{data}")
-        self.logger.log(f"[pid : {self.pid} | client] Send request: {data}")
+        self.logger.log(
+            f"[pid : {self.pid} | client] Send request: {data}", level=10
+        )
         response = self.read_response(data)
         return response
 
@@ -70,7 +72,8 @@ class RequestSender:
         while True:
             if response:
                 self.logger.log(
-                    f"[pid : {self.pid} | client] Received response: {response}"
+                    f"[pid : {self.pid} | client] Received response: {response}",
+                    level=10,
                 )
                 if int(response) != org_data * 2:
                     raise Exception(

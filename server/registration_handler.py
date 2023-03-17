@@ -83,10 +83,12 @@ class RegistrationHandler:
             self.registration[pid] = request_handler
             request_handler.start()
 
-            self.logger.log(f"[pid : {pid}] Client registration done.")
+            self.logger.log(
+                f"[pid : {pid}] Client registration done.", level=10
+            )
 
         elif op == "unregister":
-            self.logger.log(f"[pid : {pid}] Get client unregistration")
+            self.logger.log(
+                f"[pid : {pid}] Get client unregistration", level=10
+            )
             self.registration[pid].stop()
-
-            self.logger.log(f"[pid : {pid}] Client unregistration done")

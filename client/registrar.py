@@ -27,7 +27,9 @@ class Registrar:
         Register the client with the server.
         """
         self.register_pipe.write(f"register {self.pid}\n")
-        self.logger.log(f"[pid : {self.pid} | client] Registered with server.")
+        self.logger.log(
+            f"[pid : {self.pid} | client] Registered with server.", level=10
+        )
 
     def unregister(self) -> None:
         """
@@ -35,5 +37,5 @@ class Registrar:
         """
         self.register_pipe.write(f"unregister {self.pid}\n")
         self.logger.log(
-            f"[pid : {self.pid} | client] Unregistered with server."
+            f"[pid : {self.pid} | client] Unregistered with server.", level=10
         )

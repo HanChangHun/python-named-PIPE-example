@@ -1,6 +1,8 @@
+import logging
 import os
 import random
 from pathlib import Path
+import time
 from client.registrar import Registrar
 from client.request_sender import RequestSender
 
@@ -39,13 +41,34 @@ class Client:
         """
         Start the client by registering, sending requests, and unregistering.
         """
+        self.logger.log(
+            f"[pid : {self.pid}] Starting client.", level=logging.INFO
+        )
+
         self.registrar.register()
+        self.logger.log(
+            f"[pid : {self.pid}] Register client done.", level=logging.INFO
+        )
 
         for _ in range(10):
             data = generate_data()
-            self.request_sender.request(data)
+            self.logger.log(
+                f"[pid : {self.pid}] Send request: {data}", level=logging.INFO
+            )
+            response = self.request_sender.request(data)
+            self.logger.log(
+                f"[pid : {self.pid}] Get response: {response} ",
+                level=logging.INFO,
+            )
+            time.sleep(1e-4)
 
+        self.logger.log(
+            f"[pid : {self.pid}] Finishing client.", level=logging.INFO
+        )
         self.registrar.unregister()
+        self.logger.log(
+            f"[pid : {self.pid}] Unregister client done.", level=logging.INFO
+        )
 
 
 def start_client(register_pipe_path: Path, logger: MultiProcessLogger) -> None:

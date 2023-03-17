@@ -58,7 +58,8 @@ class RequestHandler:
             request = self.read_pipe.read(busy_wait=False)
             if request:
                 self.logger.log(
-                    f"[pid : {self.pid}] " f"Read from client: {request}"
+                    f"[pid : {self.pid}] " f"Read from client: {request}",
+                    level=10,
                 )
                 self.handle(request)
 
@@ -101,5 +102,6 @@ class RequestHandler:
         msg = f"{response}"
         self.write_pipe.write(msg)
         self.logger.log(
-            f"[pid : {self.pid} | server] Send response to client: {msg}"
+            f"[pid : {self.pid} | server] Send response to client: {msg}",
+            level=10,
         )
