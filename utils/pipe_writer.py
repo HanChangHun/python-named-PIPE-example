@@ -19,5 +19,5 @@ class PIPEWriter:
         Write data to the pipe.
         """
         with open(self.pipe_path, mode="wb") as fifo:
-            fifo.write(message.encode())
+            fifo.write((message + "\n").encode())
             fifo.flush()

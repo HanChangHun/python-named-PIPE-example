@@ -25,7 +25,7 @@ def main() -> None:
     server_proc = start_server_proc(register_pipe_path, timeout=2)
 
     client_procs: List[Process] = []
-    for _ in range(3):
+    for _ in range(10):
         client_proc = Process(target=start_client, args=(register_pipe_path,))
         client_procs.append(client_proc)
 

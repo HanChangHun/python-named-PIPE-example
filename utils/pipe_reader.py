@@ -2,6 +2,7 @@ import fcntl
 import os
 import time
 from pathlib import Path
+from typing import List
 
 
 class PIPEReader:
@@ -18,7 +19,7 @@ class PIPEReader:
         flags = fcntl.fcntl(self.pipe_fd, fcntl.F_GETFL)
         fcntl.fcntl(self.pipe_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-    def read(self, busy_wait=True) -> str:
+    def read(self, busy_wait=True) -> List[str]:
         """
         Read data from the pipe.
 
@@ -44,4 +45,4 @@ class PIPEReader:
             except Exception as e:
                 pass
 
-        return response
+        return response.splitlines()

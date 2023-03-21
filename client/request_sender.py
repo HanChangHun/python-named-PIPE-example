@@ -31,10 +31,16 @@ class RequestSender:
         Cleanup the RequestSender object by unlinking the pipe files and lock files.
         """
         if self.write_pipe_path.exists():
-            self.write_pipe_path.unlink()
+            try:
+                self.write_pipe_path.unlink()
+            except FileNotFoundError:
+                pass
 
         if self.read_pipe_path.exists():
-            self.read_pipe_path.unlink()
+            try:
+                self.read_pipe_path.unlink()
+            except FileNotFoundError:
+                pass
 
     def request(self, data) -> int:
         """
@@ -58,6 +64,11 @@ class RequestSender:
             Exception: If the response data is not correct.
         """
         response = self.read_pipe.read()
+        if len(response) != 1:
+            raise Exception(
+                "[pid : {self.pid} | client] Response is not correct."
+            )
+        response = response[0]
         while True:
             if response:
                 if int(response) != org_data * 2:

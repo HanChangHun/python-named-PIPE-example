@@ -53,9 +53,10 @@ class RequestHandler:
         """
         while not self._stop:
             time.sleep(1e-9)
-            request = self.read_pipe.read(busy_wait=False)
-            if request:
-                self.handle(request)
+            requests = self.read_pipe.read(busy_wait=False)
+            if requests:
+                for request in requests:
+                    self.handle(request)
 
         if self.write_pipe_path.exists():
             try:

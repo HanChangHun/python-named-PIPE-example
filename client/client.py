@@ -39,13 +39,13 @@ class Client:
         dur = (time.perf_counter_ns() - st) / 1000
         print(f"registration duration: {dur} us")
 
-        for _ in range(100):
+        for _ in range(20):
             data = generate_data()
             st = time.perf_counter_ns()
             response = self.request_sender.request(data)
             dur = (time.perf_counter_ns() - st) / 1000
             print(f"request duration: {dur} us, org: {data}, res: {response}")
-            time.sleep(1e-3)
+            time.sleep(0.05)
 
         st = time.perf_counter_ns()
         self.registrar.unregister()

@@ -58,7 +58,7 @@ class RegistrationHandler:
         """
         msgs = self.pipe_reader.read(busy_wait=False)
         if msgs:
-            for msg in msgs.split("\n"):
+            for msg in msgs:
                 msg_split = msg.split(" ")
                 op = msg_split[0]
                 pid = int(msg_split[1])

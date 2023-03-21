@@ -22,10 +22,10 @@ class Registrar:
         """
         Register the client with the server.
         """
-        self.register_pipe.write(f"register {self.pid}\n")
+        self.register_pipe.write(f"register {self.pid}")
 
     def unregister(self) -> None:
         """
         Unregister the client from the server.
         """
-        self.register_pipe.write(f"unregister {self.pid}\n")
+        self.register_pipe.write(f"unregister {self.pid}")
