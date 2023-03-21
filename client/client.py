@@ -56,7 +56,7 @@ class Client:
             print(
                 f"[{datetime.datetime.now()}] request duration: {dur} us, org: {data}, res: {response}"
             )
-            time.sleep(1e-3)
+            time.sleep(1e-2)
         print(f"total duration: {total_duration} us")
         print(f"mean duration: {total_duration / num_iter} us")
 
