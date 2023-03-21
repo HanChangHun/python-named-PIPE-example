@@ -52,13 +52,13 @@ unregistration duration: 50.495 us
 ## Performance
 
 - The performance of the example was measured across multiple environments. 
-- The results are shown in the following table for 20 tasks with 10 requests each:
+- The results are shown in the following table for 20 tasks with 10 requests each
+    - Total 40 register/unregister and 200 request.
 
 |                              | Ubuntu Desktop | Raspberry Pi    | Coral Dev Board  |
 |------------------------------|---------------:|----------------:|-----------------:|
 | Registration / Unregistration|110.69 $\mu s$  |966.81 $\mu s$   |   295.09 $\mu s$ |
 | Simple Request               |499.12 $\mu s$  |22316.61 $\mu s$ | 14339.63 $\mu s$ |
-
 
 
 ## Memo
