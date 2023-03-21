@@ -39,7 +39,7 @@ class Client:
         dur = (time.perf_counter_ns() - st) / 1000
         print(f"registration duration: {dur} us")
 
-        for _ in range(20):
+        for _ in range(3):
             data = generate_data()
             st = time.perf_counter_ns()
             response = self.request_sender.request(data)
