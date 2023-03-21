@@ -16,8 +16,6 @@ class PIPEReader:
         """
         self.pipe_path = pipe_path
         self.pipe_fd = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-        flags = fcntl.fcntl(self.pipe_fd, fcntl.F_GETFL)
-        fcntl.fcntl(self.pipe_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
     def read(self, busy_wait=True) -> List[str]:
         """
