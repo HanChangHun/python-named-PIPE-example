@@ -44,7 +44,7 @@ class Client:
         self.request_sender.request("-1 init")
 
         total_duration = 0
-        num_iter = 10
+        num_iter = 100
         for _ in range(num_iter):
             data = generate_data()
 
