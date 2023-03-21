@@ -60,6 +60,8 @@ class RegistrationHandler:
         if msgs:
             for msg in msgs:
                 msg_split = msg.split(" ")
+                if len(msg_split) != 2:
+                    continue
                 op = msg_split[0]
                 pid = int(msg_split[1])
                 self.handle_registration(op, pid)

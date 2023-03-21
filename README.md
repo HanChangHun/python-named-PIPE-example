@@ -1,5 +1,9 @@
 # Python Named PIPE Example
 
+These codes simply send a number from the client, and the server doubles it and delivers it back to the client.
+
+Measure performance across multiple environments
+
 ## Scenario
 
 1. Run the server.
@@ -44,6 +48,16 @@ unregistration duration: 26.399 us
 unregistration duration: 44.024 us
 unregistration duration: 50.495 us
 ```
+
+## Performance
+
+- 20 task, 10 request
+
+|      | Ubuntu Desktop | Raspberry Pi | Coral Dev Board |
+|------|------|------|------|
+| Registration / Unregistration | 내용 | 내용 | 295.09 $\mu s$ |
+| Simple Request  | 내용 | 내용 | 14339.63.867 $\mu s$ |
+
 
 ## Memo
 
