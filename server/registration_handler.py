@@ -43,6 +43,7 @@ class RegistrationHandler:
         Stop the registration handler's main loop.
         """
         self._stop = True
+        self.pipe_reader.close()
 
     def read_register_pipe_loop(self) -> None:
         """
@@ -59,6 +60,7 @@ class RegistrationHandler:
         msgs = self.pipe_reader.read(busy_wait=False)
         if msgs:
             for msg in msgs:
+                print(msg)
                 msg_split = msg.split(" ")
                 if len(msg_split) != 2:
                     continue

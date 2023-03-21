@@ -41,7 +41,7 @@ class Client:
         dur = (time.perf_counter_ns() - st) / 1000
         print(f"[{datetime.datetime.now()}] registration duration: {dur} us")
 
-        st_t = time.perf_counter_ns()
+        total_duration = 0
         num_iter = 100
         for _ in range(num_iter):
             st = time.perf_counter_ns()
@@ -50,13 +50,13 @@ class Client:
             # print(f"[{datetime.datetime.now()}] send request")
             response = self.request_sender.request(data)
             dur = (time.perf_counter_ns() - st) / 1000
+            total_duration += dur
             print(
                 f"[{datetime.datetime.now()}] request duration: {dur} us, org: {data}, res: {response}"
             )
-            time.sleep(0.2)
-        dur_t = (time.perf_counter_ns() - st_t) / 1000
-        print(f"total duration: {dur_t} us")
-        print(f"mean duration: {dur_t / num_iter} us")
+            time.sleep(1e-4)
+        print(f"total duration: {total_duration} us")
+        print(f"mean duration: {total_duration / num_iter} us")
 
         st = time.perf_counter_ns()
         self.registrar.unregister()

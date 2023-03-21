@@ -29,3 +29,4 @@ class Registrar:
         Unregister the client from the server.
         """
         self.register_pipe.write(f"unregister {self.pid}")
+        self.register_pipe.close()
