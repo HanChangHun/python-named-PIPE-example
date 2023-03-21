@@ -2,7 +2,6 @@ import threading
 import time
 from pathlib import Path
 
-from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
 
@@ -12,12 +11,11 @@ class RequestHandler:
     A class to handle client requests and send responses.
     """
 
-    def __init__(self, pid, logger: MultiProcessLogger) -> None:
+    def __init__(self, pid) -> None:
         """
         Initialize the RequestHandler object.
         """
         self.pid = pid
-        self.logger = logger
 
         self.read_th = None
         self._stop = False
@@ -57,23 +55,19 @@ class RequestHandler:
             time.sleep(1e-9)
             request = self.read_pipe.read(busy_wait=False)
             if request:
-                self.logger.log(
-                    f"[pid : {self.pid}] " f"Read from client: {request}",
-                    level=10,
-                )
                 self.handle(request)
 
         if self.write_pipe_path.exists():
-            self.write_pipe_path.unlink()
+            try:
+                self.write_pipe_path.unlink()
+            except FileNotFoundError:
+                pass
 
         if self.read_pipe_path.exists():
-            self.read_pipe_path.unlink()
-
-        if self.write_pipe.pipe_lock.lock_file_path.exists():
-            self.write_pipe.pipe_lock.lock_file_path.unlink()
-
-        if self.read_pipe.pipe_lock.lock_file_path.exists():
-            self.read_pipe.pipe_lock.lock_file_path.unlink()
+            try:
+                self.read_pipe_path.unlink()
+            except FileNotFoundError:
+                pass
 
     def handle(self, request_data: str) -> None:
         """
@@ -101,7 +95,3 @@ class RequestHandler:
         """
         msg = f"{response}"
         self.write_pipe.write(msg)
-        self.logger.log(
-            f"[pid : {self.pid} | server] Send response to client: {msg}",
-            level=10,
-        )

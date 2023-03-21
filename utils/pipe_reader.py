@@ -1,8 +1,7 @@
+import fcntl
 import os
 import time
 from pathlib import Path
-
-from utils.pipe_lock import PIPELock
 
 
 class PIPEReader:
@@ -15,14 +14,9 @@ class PIPEReader:
         Initialize the PIPEReader object.
         """
         self.pipe_path = pipe_path
-        self.pipe_lock = PIPELock(pipe_path)
-        self.pipe = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-
-    def __del__(self):
-        """
-        Close the pipe when the object is deleted.
-        """
-        os.close(self.pipe)
+        self.pipe_fd = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+        flags = fcntl.fcntl(self.pipe_fd, fcntl.F_GETFL)
+        fcntl.fcntl(self.pipe_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
     def read(self, busy_wait=True) -> str:
         """
@@ -37,23 +31,17 @@ class PIPEReader:
         """
         while True:
             time.sleep(1e-9)
-            self.pipe_lock.acquire_read_lock()
-            try:
-                response = b""
-                while True:
-                    chunk = os.read(self.pipe, 1024)
-                    if not chunk:
-                        break
-                    response += chunk
 
+            response = ""
+            try:
+                response = os.read(self.pipe_fd, 512).decode().strip()
                 if response:
-                    response = response.decode().strip()
                     break
 
                 if not busy_wait:
                     break
 
-            finally:
-                self.pipe_lock.release_read_lock()
+            except Exception as e:
+                pass
 
         return response

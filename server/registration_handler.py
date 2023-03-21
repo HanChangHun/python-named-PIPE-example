@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Dict
 
 from server.request_handler import RequestHandler
-from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
 from utils.utils import make_pipe
 
@@ -14,17 +13,12 @@ class RegistrationHandler:
     A class to handle client registration and unregistration.
     """
 
-    def __init__(
-        self,
-        register_pipe_path: Path,
-        logger: MultiProcessLogger,
-    ) -> None:
+    def __init__(self, register_pipe_path: Path) -> None:
         """
         Initialize the RegistrationHandler object.
         """
 
         self.pipe_path = register_pipe_path
-        self.logger = logger
 
         self._stop = False
 
@@ -62,7 +56,7 @@ class RegistrationHandler:
         """
         Read messages from the register pipe and handle them.
         """
-        msgs = self.pipe_reader.read(busy_wait=False).strip()
+        msgs = self.pipe_reader.read(busy_wait=False)
         if msgs:
             for msg in msgs.split("\n"):
                 msg_split = msg.split(" ")
@@ -79,16 +73,9 @@ class RegistrationHandler:
             pid (int): The client process ID.
         """
         if op == "register":
-            request_handler = RequestHandler(pid, logger=self.logger)
+            request_handler = RequestHandler(pid)
             self.registration[pid] = request_handler
             request_handler.start()
 
-            self.logger.log(
-                f"[pid : {pid}] Client registration done.", level=10
-            )
-
         elif op == "unregister":
-            self.logger.log(
-                f"[pid : {pid}] Get client unregistration", level=10
-            )
             self.registration[pid].stop()

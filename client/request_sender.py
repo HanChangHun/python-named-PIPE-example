@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-from utils.multi_process_logger import MultiProcessLogger
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
 from utils.utils import make_pipe
@@ -12,12 +11,11 @@ class RequestSender:
     A class to handle sending requests to the server and reading responses.
     """
 
-    def __init__(self, pid: int, logger: MultiProcessLogger) -> None:
+    def __init__(self, pid: int) -> None:
         """
         Initialize the RequestSender object.
         """
         self.pid = pid
-        self.logger = logger
 
         self.write_pipe_path = Path(f"{self.pid}_to_server_pipe")
         self.read_pipe_path = Path(f"server_to_{self.pid}_pipe")
@@ -38,12 +36,6 @@ class RequestSender:
         if self.read_pipe_path.exists():
             self.read_pipe_path.unlink()
 
-        if self.write_pipe.pipe_lock.lock_file_path.exists():
-            self.write_pipe.pipe_lock.lock_file_path.unlink()
-
-        if self.read_pipe.pipe_lock.lock_file_path.exists():
-            self.read_pipe.pipe_lock.lock_file_path.unlink()
-
     def request(self, data) -> int:
         """
         Send a request to the server and read the response.
@@ -52,9 +44,6 @@ class RequestSender:
             The response received from the server.
         """
         self.write_pipe.write(f"{data}")
-        self.logger.log(
-            f"[pid : {self.pid} | client] Send request: {data}", level=10
-        )
         response = self.read_response(data)
         return response
 
@@ -71,10 +60,6 @@ class RequestSender:
         response = self.read_pipe.read()
         while True:
             if response:
-                self.logger.log(
-                    f"[pid : {self.pid} | client] Received response: {response}",
-                    level=10,
-                )
                 if int(response) != org_data * 2:
                     raise Exception(
                         f"[pid : {self.pid} | client] "
