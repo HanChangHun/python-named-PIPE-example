@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from utils.pipe_reader import PIPEReader
@@ -72,7 +71,11 @@ class RequestSender:
                 "[pid : {self.pid} | client] Response is not correct."
             )
         response = response[0]
-        org_data = int(org_data.split(" ")[1])
+        org_data_split = org_data.split(" ")
+        if org_data_split[1] == "init":
+            return
+        else:
+            org_data = int(org_data_split[1])
         while True:
             if response:
                 if int(response) != org_data * 2:

@@ -60,7 +60,6 @@ class RegistrationHandler:
         msgs = self.pipe_reader.read(busy_wait=False)
         if msgs:
             for msg in msgs:
-                print(msg)
                 msg_split = msg.split(" ")
                 if len(msg_split) != 2:
                     continue

@@ -1,49 +1,8 @@
-import fcntl
-import os
 import time
 from pathlib import Path
 from typing import List
 import zmq
-
-# class PIPEReader:
-#     """
-#     A class to read data from a named pipe.
-#     """
-
-#     def __init__(self, pipe_path: Path):
-#         """
-#         Initialize the PIPEReader object.
-#         """
-#         self.pipe_path = pipe_path
-#         self.pipe_fd = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-
-#     def read(self, busy_wait=True) -> List[str]:
-#         """
-#         Read data from the pipe.
-
-#         Args:
-#             busy_wait (bool, optional): If True, keep trying to read the pipe until data is available.
-#                 If False, return immediately if there is no data. Defaults to True.
-
-#         Returns:
-#             str: The data read from the pipe.
-#         """
-#         while True:
-#             time.sleep(1e-6)
-
-#             response = ""
-#             try:
-#                 response = os.read(self.pipe_fd, 512).decode().strip()
-#                 if response:
-#                     break
-
-#                 if not busy_wait:
-#                     break
-
-#             except Exception as e:
-#                 pass
-
-#         return response.splitlines()
+from zmq import Poller, POLLIN
 
 
 class PIPEReader:
@@ -71,19 +30,28 @@ class PIPEReader:
         Returns:
             str: The data read from the pipe.
         """
+
         while self.running:
             try:
-                message = self.socket.recv_string().strip().splitlines()
+                if busy_wait:
+                    message = self.socket.recv_string()
+                else:
+                    message = self.socket.recv_string(zmq.NOBLOCK)
+
                 if message:
-                    return message
+                    return message.strip().splitlines()
+
                 if not busy_wait:
                     break
+
             except zmq.Again:
                 pass
 
             except Exception as e:
                 break
+
             time.sleep(1e-6)
+
         return []
 
     def close(self):

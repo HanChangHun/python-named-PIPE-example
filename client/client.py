@@ -41,12 +41,14 @@ class Client:
         dur = (time.perf_counter_ns() - st) / 1000
         print(f"[{datetime.datetime.now()}] registration duration: {dur} us")
 
+        self.request_sender.request("-1 init")
+
         total_duration = 0
-        num_iter = 100
+        num_iter = 10
         for _ in range(num_iter):
-            st = time.perf_counter_ns()
             data = generate_data()
 
+            st = time.perf_counter_ns()
             # print(f"[{datetime.datetime.now()}] send request")
             response = self.request_sender.request(data)
             dur = (time.perf_counter_ns() - st) / 1000

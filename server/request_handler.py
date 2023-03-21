@@ -56,7 +56,6 @@ class RequestHandler:
         If _stop is set to True, the read pipe and write pipe are deleted.
         """
         while not self._stop:
-            time.sleep(1e-6)
             requests = self.read_pipe.read(busy_wait=False)
             if requests:
                 for request in requests:
@@ -64,6 +63,7 @@ class RequestHandler:
                     #     f"[{datetime.datetime.now()}] get request: {request}"
                     # )
                     self.handle(request, cur_time=time.perf_counter_ns())
+            time.sleep(1e-6)
 
         if self.write_pipe_path.exists():
             try:
@@ -82,7 +82,7 @@ class RequestHandler:
         Handle a client request.
         """
         req_time, data = self.parse_request(request)
-        if cur_time is not None:
+        if cur_time is not None and int(req_time) >= 0:
             print(
                 f"[{datetime.datetime.now()}] ipc overhead: {(cur_time - int(req_time)) / 1000} us"
             )
@@ -104,6 +104,8 @@ class RequestHandler:
         """
         Process the request data.
         """
+        if data == "init":
+            return -1
         return int(data) * 2
 
     def send_response(self, response: int) -> None:
