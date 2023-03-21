@@ -42,14 +42,14 @@ class RequestSender:
             except FileNotFoundError:
                 pass
 
-    def request(self, data) -> int:
+    def request(self, data: str) -> int:
         """
         Send a request to the server and read the response.
 
         Returns:
             The response received from the server.
         """
-        self.write_pipe.write(f"{data}")
+        self.write_pipe.write(data)
         response = self.read_response(data)
         return response
 
@@ -69,6 +69,7 @@ class RequestSender:
                 "[pid : {self.pid} | client] Response is not correct."
             )
         response = response[0]
+        org_data = int(org_data.split(" ")[1])
         while True:
             if response:
                 if int(response) != org_data * 2:

@@ -1,16 +1,18 @@
 import os
 import random
-from pathlib import Path
 import time
+import datetime
+from pathlib import Path
+
 from client.registrar import Registrar
 from client.request_sender import RequestSender
 
 
-def generate_data() -> int:
+def generate_data() -> str:
     """
     Generate random integer data between 1 and 100.
     """
-    return random.randint(1, 100)
+    return f"{time.perf_counter_ns()} {random.randint(1, 100)}"
 
 
 class Client:
@@ -37,20 +39,29 @@ class Client:
         st = time.perf_counter_ns()
         self.registrar.register()
         dur = (time.perf_counter_ns() - st) / 1000
-        print(f"registration duration: {dur} us")
+        print(f"[{datetime.datetime.now()}] registration duration: {dur} us")
 
-        for _ in range(10):
-            data = generate_data()
+        st_t = time.perf_counter_ns()
+        num_iter = 500
+        for _ in range(num_iter):
             st = time.perf_counter_ns()
+            data = generate_data()
+
+            # print(f"[{datetime.datetime.now()}] send request")
             response = self.request_sender.request(data)
             dur = (time.perf_counter_ns() - st) / 1000
-            print(f"request duration: {dur} us, org: {data}, res: {response}")
-            time.sleep(0.05)
+            print(
+                f"[{datetime.datetime.now()}] request duration: {dur} us, org: {data}, res: {response}"
+            )
+            time.sleep(1e-9)
+        dur_t = (time.perf_counter_ns() - st_t) / 1000
+        print(f"total duration: {dur_t} us")
+        print(f"mean duration: {dur_t / num_iter} us")
 
         st = time.perf_counter_ns()
         self.registrar.unregister()
         dur = (time.perf_counter_ns() - st) / 1000
-        print(f"unregistration duration: {dur} us")
+        print(f"[{datetime.datetime.now()}] unregistration duration: {dur} us")
 
 
 def start_client(register_pipe_path: Path) -> None:

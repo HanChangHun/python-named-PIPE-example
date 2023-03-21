@@ -1,6 +1,8 @@
 import threading
 import time
+import datetime
 from pathlib import Path
+from typing import List, Union
 
 from utils.pipe_reader import PIPEReader
 from utils.pipe_writer import PIPEWriter
@@ -56,7 +58,10 @@ class RequestHandler:
             requests = self.read_pipe.read(busy_wait=False)
             if requests:
                 for request in requests:
-                    self.handle(request)
+                    # print(
+                    #     f"[{datetime.datetime.now()}] get request: {request}"
+                    # )
+                    self.handle(request, cur_time=time.perf_counter_ns())
 
         if self.write_pipe_path.exists():
             try:
@@ -70,25 +75,34 @@ class RequestHandler:
             except FileNotFoundError:
                 pass
 
-    def handle(self, request_data: str) -> None:
+    def handle(self, request: str, cur_time=None) -> None:
         """
         Handle a client request.
         """
-        data = self.parse_request(request_data)
+        req_time, data = self.parse_request(request)
+        if cur_time is not None:
+            print(
+                f"[{datetime.datetime.now()}] ipc overhead: {(cur_time - int(req_time)) / 1000} us"
+            )
+        # print(f"[{datetime.datetime.now()}] parse request: {request}")
         response = self.process_request(data)
+        # print(
+        #     f"[{datetime.datetime.now()}] process request: {request} -> {response}"
+        # )
         self.send_response(response)
+        # print(f"[{datetime.datetime.now()}] send response: {response}")
 
-    def parse_request(self, request_data: str) -> int:
+    def parse_request(self, request_data: str) -> List[str]:
         """
         Parse the request data.
         """
-        return int(request_data)
+        return request_data.split(" ")
 
-    def process_request(self, data: int) -> int:
+    def process_request(self, data: str) -> int:
         """
         Process the request data.
         """
-        return data * 2
+        return int(data) * 2
 
     def send_response(self, response: int) -> None:
         """
