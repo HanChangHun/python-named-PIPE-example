@@ -1,7 +1,6 @@
 # Python Named PIPE Example
 
-These codes simply send a number from the client, and the server doubles it and delivers it back to the client.
-
+This repository provides an example of using Named Pipes in Python. The codes simply send a number from the client, and the server doubles it and delivers it back to the client.
 Measure performance across multiple environments
 
 ## Scenario
@@ -14,16 +13,17 @@ Measure performance across multiple environments
     1. If there is register pipe, pass the client's pid to register it with the server process.
 
 3. When the server receives a registration request from the client, it creates two pipes.
-    - Client to server, server to client.
+    - One for communication from client to server.
+    - Another for communication from server to client.
 
-4. The client sends a request to the server with pipe.
+4. The client sends a request to the server using the client-to-server named pipe.
 
-5. The server sends the result to the client with pipe.
+5. The server processes the request, doubles the number, and sends the result back to the client through the server-to-client named pipe.
 
 
-## How to use
+## Usage
 
-You can check the result by executing the `test.py`.
+You can check the result by running the `test.py`.
 
 ```python
 python3 test.py
@@ -51,12 +51,14 @@ unregistration duration: 50.495 us
 
 ## Performance
 
-- 20 task, 10 request
+- The performance of the example was measured across multiple environments. 
+- The results are shown in the following table for 20 tasks with 10 requests each:
 
-|      | Ubuntu Desktop | Raspberry Pi | Coral Dev Board |
-|------|------|------|------|
-| Registration / Unregistration | 내용 | 내용 | 295.09 $\mu s$ |
-| Simple Request  | 내용 | 내용 | 14339.63.867 $\mu s$ |
+|                              | Ubuntu Desktop | Raspberry Pi    | Coral Dev Board  |
+|------------------------------|---------------:|----------------:|-----------------:|
+| Registration / Unregistration|110.69 $\mu s$  |966.81 $\mu s$   |   295.09 $\mu s$ |
+| Simple Request               |499.12 $\mu s$  |22316.61 $\mu s$ | 14339.63 $\mu s$ |
+
 
 
 ## Memo
