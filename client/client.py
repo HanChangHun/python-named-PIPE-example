@@ -53,7 +53,7 @@ class Client:
             print(
                 f"[{datetime.datetime.now()}] request duration: {dur} us, org: {data}, res: {response}"
             )
-            time.sleep(0.1)
+            time.sleep(0.2)
         dur_t = (time.perf_counter_ns() - st_t) / 1000
         print(f"total duration: {dur_t} us")
         print(f"mean duration: {dur_t / num_iter} us")

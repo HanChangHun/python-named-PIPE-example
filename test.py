@@ -22,7 +22,7 @@ def start_server_proc(register_pipe_path, timeout) -> Process:
 def main() -> None:
     register_pipe_path = Path("register_pipe")
 
-    server_proc = start_server_proc(register_pipe_path, timeout=15)
+    server_proc = start_server_proc(register_pipe_path, timeout=20)
 
     client_procs: List[Process] = []
     for _ in range(1):
