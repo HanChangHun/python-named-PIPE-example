@@ -49,7 +49,7 @@ class RegistrationHandler:
         Continuously read the register pipe and handle registration messages.
         """
         while not self._stop:
-            time.sleep(1e-9)
+            time.sleep(1e-6)
             self.read_register_pipe()
 
     def read_register_pipe(self) -> None:

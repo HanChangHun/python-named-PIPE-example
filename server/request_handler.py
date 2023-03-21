@@ -52,7 +52,7 @@ class RequestHandler:
         If _stop is set to True, the read pipe and write pipe are deleted.
         """
         while not self._stop:
-            time.sleep(1e-9)
+            time.sleep(1e-6)
             requests = self.read_pipe.read(busy_wait=False)
             if requests:
                 for request in requests:

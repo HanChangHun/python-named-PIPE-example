@@ -29,7 +29,7 @@ class PIPEReader:
             str: The data read from the pipe.
         """
         while True:
-            time.sleep(1e-9)
+            time.sleep(1e-6)
 
             response = ""
             try:
