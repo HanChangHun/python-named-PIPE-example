@@ -42,7 +42,7 @@ class Client:
         print(f"[{datetime.datetime.now()}] registration duration: {dur} us")
 
         st_t = time.perf_counter_ns()
-        num_iter = 500
+        num_iter = 100
         for _ in range(num_iter):
             st = time.perf_counter_ns()
             data = generate_data()
@@ -53,7 +53,7 @@ class Client:
             print(
                 f"[{datetime.datetime.now()}] request duration: {dur} us, org: {data}, res: {response}"
             )
-            time.sleep(0.5)
+            time.sleep(0.1)
         dur_t = (time.perf_counter_ns() - st_t) / 1000
         print(f"total duration: {dur_t} us")
         print(f"mean duration: {dur_t / num_iter} us")
