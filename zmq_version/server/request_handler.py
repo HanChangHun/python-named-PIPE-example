@@ -46,6 +46,8 @@ class RequestHandler:
         Stop the request handler.
         """
         self._stop = True
+        self.read_pipe.close()
+        self.write_pipe.close()
 
     def read_client_pipe_loop(self) -> None:
         """

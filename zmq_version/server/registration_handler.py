@@ -43,6 +43,7 @@ class RegistrationHandler:
         Stop the registration handler's main loop.
         """
         self._stop = True
+        self.pipe_reader.close()
 
     def read_register_pipe_loop(self) -> None:
         """

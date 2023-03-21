@@ -1,8 +1,7 @@
+import os
 import time
 from pathlib import Path
 from typing import List
-import zmq
-from zmq import Poller, POLLIN
 
 
 class PIPEReader:
@@ -14,10 +13,8 @@ class PIPEReader:
         """
         Initialize the PIPEReader object.
         """
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PULL)
-        self.socket.bind(f"ipc://{pipe_path}")
-        self.running = True
+        self.pipe_path = pipe_path
+        self.pipe_fd = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
 
     def read(self, busy_wait=True) -> List[str]:
         """
@@ -30,34 +27,19 @@ class PIPEReader:
         Returns:
             str: The data read from the pipe.
         """
+        while True:
+            time.sleep(1e-6)
 
-        while self.running:
+            response = ""
             try:
-                if busy_wait:
-                    message = self.socket.recv_string()
-                else:
-                    message = self.socket.recv_string(zmq.NOBLOCK)
-
-                if message:
-                    return message.strip().splitlines()
+                response = os.read(self.pipe_fd, 512).decode().strip()
+                if response:
+                    break
 
                 if not busy_wait:
                     break
 
-            except zmq.Again:
+            except Exception as e:
                 pass
 
-            except Exception as e:
-                break
-
-            time.sleep(1e-6)
-
-        return []
-
-    def close(self):
-        """
-        Stop the PIPEReader object.
-        """
-        self.running = False
-        self.socket.close()
-        self.context.term()
+        return response.splitlines()

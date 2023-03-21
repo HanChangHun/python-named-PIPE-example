@@ -29,6 +29,9 @@ class RequestSender:
         """
         Cleanup the RequestSender object by unlinking the pipe files and lock files.
         """
+        self.write_pipe.close()
+        self.read_pipe.close()
+
         if self.write_pipe_path.exists():
             try:
                 self.write_pipe_path.unlink()

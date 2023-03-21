@@ -1,5 +1,4 @@
 from pathlib import Path
-import zmq
 
 
 class PIPEWriter:
@@ -11,22 +10,12 @@ class PIPEWriter:
         """
         Initialize the PIPEWriter object.
         """
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PUSH)
-        self.socket.connect(f"ipc://{pipe_path}")
-        self.running = True
+        self.pipe_path = pipe_path
 
     def write(self, message: str):
         """
         Write data to the pipe.
         """
-        if self.running:
-            self.socket.send_string(message)
-
-    def close(self):
-        """
-        Stop the PIPEWriter object.
-        """
-        self.running = False
-        self.socket.close()
-        self.context.term()
+        with open(self.pipe_path, mode="wb") as fifo:
+            fifo.write((message + "\n").encode())
+            fifo.flush()
